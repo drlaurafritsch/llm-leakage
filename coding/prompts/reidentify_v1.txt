@@ -1,0 +1,9 @@
+The following excerpt comes from a US public company's annual report (Form 10-K). Identifying details may have been removed.
+
+Which company wrote it? Give your single best guess even if you are unsure, and say how confident you are.
+
+Return only a JSON object, with no other text:
+{"company_name": "<name or UNKNOWN>", "ticker": "<ticker or UNKNOWN>", "confidence": <0-1>}
+
+EXCERPT:
+{text}

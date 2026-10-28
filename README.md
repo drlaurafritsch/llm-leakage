@@ -1,0 +1,150 @@
+# leakcheck: look-ahead leakage in LLM-coded text
+
+Large language models have read the future. When researchers use them to code historical documents, such as annual reports, project filings, speeches or court records, the codes can absorb what the model knows about later events rather than what the document says. Any study that treats those codes as measured at the time of writing is then contaminated.
+
+This repository does two things.
+
+1. **A reusable diagnostic** (`diagnostic/leakcheck`) that estimates leakage in any LLM-coded measure of dated text, given documents scored by several models with different training cutoffs.
+2. **A demonstration on SEC 10-K filings**: risk factor and MD&A text from 10-Ks filed 2020–2023, with later bankruptcies and accounting restatements taken from EDGAR itself. It measures leakage across a masking ladder and tests whether models re-identify firms after their names are removed.
+
+Every input is public. Every model call is cached, so the cache is the replication record.
+
+## Identification
+
+The same document is scored by models whose training cutoffs differ. An outcome that happened before a model's cutoff is *knowable* to that model. Leakage is the extra shift in a model's score when the outcome is knowable to it, net of document fixed effects and each model's general ability to read outcome-relevant signals from text:
+
+```
+score[u,m] = a[u] + b[m] + c[m]·outcome[u] + γ·knowable[u,m] + e
+```
+
+γ is identified from outcomes that fall between model cutoffs. Standard errors are clustered by firm. The estimator reports how many units identify γ, so an uninformative design is visible immediately.
+
+## Setup
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+
+# SEC asks for a descriptive User-Agent with a contact address
+export SEC_USER_AGENT="Your Name Affiliation you@example.org"
+
+# Any OpenAI-compatible endpoint; OpenRouter shown here
+export LLM_BASE_URL="https://openrouter.ai/api/v1"
+export LLM_API_KEY="sk-or-..."
+```
+
+The simplest way to run the model step is `bash run_models_on_my_mac.sh` (50-document pilot) and then `bash run_models_on_my_mac.sh full`. The script sets up Python, asks for your OpenRouter key without displaying or storing it, and runs models, probe and analysis.
+
+## Models and years
+
+`config/models.yaml` codes every document with six models from four developers. Cutoffs are as stated by each developer; month-level cutoffs are coded as the first day of the following month.
+
+| Key | Model | Weights | Stated cutoff | Source |
+|---|---|---|---|---|
+| `gpt4omini` | openai/gpt-4o-mini-2024-07-18 | Closed | October 2023 | [Azure OpenAI model list](https://learn.microsoft.com/azure/ai-services/openai/concepts/models) |
+| `llama33` | meta-llama/llama-3.3-70b-instruct | Open | December 2023 | [Llama 3.3 model card](https://github.com/meta-llama/llama-models/blob/main/models/llama3_3/MODEL_CARD.md) |
+| `gpt41mini` | openai/gpt-4.1-mini | Closed | May 2024 | [Azure OpenAI model list](https://learn.microsoft.com/azure/ai-services/openai/concepts/models) |
+| `llama4` | meta-llama/llama-4-maverick | Open | August 2024 | [Llama 4 model card](https://github.com/meta-llama/llama-models/blob/main/models/llama4/MODEL_CARD.md) |
+| `gemini25flash` | google/gemini-2.5-flash | Closed | January 2025 | [Gemini API model page](https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash) |
+| `haiku55` | anthropic/claude-haiku-5.5 | Closed | June 2026 (reliable knowledge cutoff) | [Claude models overview](https://platform.claude.com/docs/en/models/overview) |
+
+γ is identified from outcomes that occur between two models' cutoffs. 10-Ks filed 2020–2023 with a three-year window place outcomes between 2020 and late 2026; the sample prioritises events dated November 2023 to June 2026. The run prints `n_identifying_units`; below a few hundred, widen the years or add models. To swap models, edit the YAML and cite the new cutoff source.
+
+## Data included
+
+`data/interim/` holds the processed EDGAR data, so the model step can run without re-downloading anything:
+
+| File | Contents |
+|---|---|
+| `universe.csv`, `assets_frames.csv` | 8,748 firms reporting total assets in XBRL, 2019–2023 |
+| `firm_years.csv` | 24,798 10-Ks filed 2020–2023, with SIC, log assets and outcome dates |
+| `entities.jsonl` | Names, former names and tickers (used for masking and scoring the probe) |
+| `sample.csv` | 1,499 matched firm-years: 500 events and 999 controls |
+| `documents.jsonl.gz` | Extracted Risk Factors and MD&A text for 1,473 of them |
+
+Outcomes are bankruptcy (8-K Item 1.03) and non-reliance restatement (8-K Item 4.02) within three years. Delistings and deregistrations are excluded because most follow mergers; blank-check companies (SIC 6770) are excluded because their 2021 restatements followed an SEC staff statement. `make edgar sample texts` rebuilds everything from scratch.
+
+## Running the demonstration
+
+```bash
+make test        # unit tests (seconds)
+make simulate    # full pipeline on a synthetic world with planted leakage (minutes)
+
+make edgar       # firm universe, filing histories and outcomes (about 1.5 hours; already done, see Data included)
+make sample      # event firm-years and matched controls
+make texts       # risk factor and MD&A sections for the sample
+make models      # construct coding and prediction, all models and masking levels
+make probe       # re-identification probe
+make analysis    # estimates, report and figures
+```
+
+Each step resumes where it stopped. Start small with `python -m coding.run_models --limit 50` to check costs before a full run.
+
+## Outputs
+
+| File | Contents |
+|---|---|
+| `results/leakage_estimates.csv` | γ, SE, CI, γ in SD units, fame interaction, per task, measure and masking level |
+| `results/auc.csv` | Discrimination per model, on knowable versus unknowable events |
+| `results/reid_rates.csv` | Share of firms re-identified per model and masking level |
+| `results/report.md` | Plain-language verdicts |
+| `results/figures/` | Leakage and re-identification across the masking ladder |
+
+## Using the diagnostic on your own corpus
+
+Prepare a long CSV with one row per (document, model): `unit, model, score, outcome, event_date` and optionally a cluster column and a grouping column. Then:
+
+```bash
+python -m diagnostic.leakcheck scores.csv --cutoffs cutoffs.yaml --cluster firm --by level
+```
+
+`cutoffs.yaml` maps each model name to its training cutoff date. In Python:
+
+```python
+from diagnostic.leakcheck import estimate, verdict
+r = estimate(df, unit="unit", model="model", score="score", outcome="outcome",
+             event_date="event_date", cutoff="cutoff", cluster="firm")
+print(verdict(r))
+```
+
+## The masking ladder
+
+| Level | What is removed |
+|---|---|
+| `raw` | nothing |
+| `names` | current and former firm names, tickers, URLs and e-mail addresses |
+| `generalised` | plus years, dates, money amounts, large numbers and percentages |
+| `paraphrased` | plus a rewrite by the earliest-cutoff model, instructed to remove identifying detail |
+
+## Simulation
+
+`simulate/` builds a synthetic corpus with known ground truth and a fake model that leaks when it recognises a firm whose outcome precedes its cutoff. The real masking, model-running, probe and analysis code runs unchanged; only the model is fake. With planted leakage the estimator recovers it and it falls to zero at the paraphrase rung; with no planted leakage every estimate is null.
+
+## Layout
+
+```
+config/            sample and model definitions
+data/              EDGAR client, section extraction, sample construction
+masking/           the masking ladder
+coding/            prompts, model client, cached job runner
+probes/            re-identification probe
+analysis/          long frames, estimates, report, figures
+diagnostic/leakcheck/  the reusable estimator and CLI
+simulate/          synthetic world and fake model
+tests/             unit tests
+```
+
+## Citation
+
+Fritsch, L. (2026). *The model has read the future: Detecting and correcting look-ahead leakage in LLM-coded organisational data.* Proposal to the *Organization Science* special issue "AI-Enabled Frontiers in Organizational Science". Code: https://github.com/drlaurafritsch/llm-leakage
+
+## Known limitations
+
+- Training cutoffs are often loosely documented; results are only as good as `config/models.yaml`.
+- Section extraction is heuristic and fails on some filings; failures are counted and skipped.
+- Name masking misses short forms that are not in EDGAR's name history (for example a brand name used in the text). That residual identifiability is itself measured by the probe.
+- Event counts for individual outcome types are small; the pooled estimate is the primary result.
+
+## Licence
+
+Code is released under the MIT licence (see `LICENSE`). EDGAR filings are public records of the US Securities and Exchange Commission.

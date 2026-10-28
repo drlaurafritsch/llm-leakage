@@ -1,0 +1,12 @@
+You are assisting an academic study of corporate disclosures.
+
+Read the excerpt from a company's annual report (Form 10-K). Estimate the probability that EACH of the following happens to this company within three years after the report was filed. Base your estimates ONLY on what the text says.
+
+- bankruptcy: the company files for bankruptcy or enters receivership.
+- restatement: the company announces that previously issued financial statements can no longer be relied upon.
+
+Return only a JSON object with probabilities between 0 and 1, with no other text:
+{"bankruptcy": <p>, "restatement": <p>}
+
+EXCERPT:
+{text}

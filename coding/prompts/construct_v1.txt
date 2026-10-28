@@ -1,0 +1,13 @@
+You are coding an excerpt from a company's annual report (Form 10-K) for an academic study.
+
+Rate the excerpt on each construct below using a 1 to 7 scale. Base every rating ONLY on what the text itself says. Do not use any knowledge you may have about this company or about events after the report was written.
+
+- financial_distress: 1 = no sign of financial strain; 7 = severe strain (going-concern doubt, covenant breaches, liquidity shortfall, default risk).
+- managerial_optimism: 1 = guarded, pessimistic outlook; 7 = highly confident, expansive outlook.
+- risk_candour: 1 = boilerplate, generic risk language; 7 = specific, frank disclosure of the firm's own vulnerabilities.
+
+Return only a JSON object, with no other text:
+{"financial_distress": <1-7>, "managerial_optimism": <1-7>, "risk_candour": <1-7>}
+
+EXCERPT:
+{text}

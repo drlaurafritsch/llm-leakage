@@ -1,0 +1,47 @@
+# Sample definition for the EDGAR demonstration.
+# All sources are public SEC EDGAR endpoints; no licensed data is used.
+
+# SEC requires a descriptive User-Agent with a contact address.
+# Set it in the environment instead of here:  export SEC_USER_AGENT="Name Affiliation email"
+sec_user_agent_env: SEC_USER_AGENT
+
+# 10-K filings whose filing date falls in these years form the document pool.
+# Chosen so that three-year outcome windows (2020 to late 2026) straddle the
+# model cutoffs in models.yaml (October 2023 to June 2026). Outcomes after
+# June 2026 are unknowable to every model and act as a clean baseline.
+filing_years: [2020, 2021, 2022, 2023]
+
+# Outcome window after the 10-K filing date, in years.
+horizon_years: 3
+
+# Outcome definitions. Each is detected from the firm's own EDGAR filing history.
+outcomes:
+  bankruptcy:
+    forms: ["8-K", "8-K/A"]
+    items: ["1.03"]          # Bankruptcy or receivership
+  restatement:
+    forms: ["8-K", "8-K/A"]
+    items: ["4.02"]          # Non-reliance on previously issued financial statements
+# Excluded on purpose: Form 25 (delisting), Form 15 (deregistration) and 8-K
+# Item 3.01 (listing notices) are dominated by mergers and acquisitions in this
+# sample (3.01 appears within three years for 29% of firm-years), so they
+# would mix distress with takeovers. Bankruptcy and non-reliance restatements
+# are unambiguous adverse outcomes.
+
+# Matched-control design: for every event firm-year, draw controls from the
+# same 2-digit SIC and filing year, nearest in log total assets, with no
+# outcome of any type inside the horizon.
+controls_per_event: 2
+match_on_sic_digits: 2
+
+# Prototype size caps (raise for the full study).
+max_event_firm_years: 500
+# Events dated between the earliest and latest model cutoffs are sampled first,
+# because they are the ones that identify leakage (see config/models.yaml).
+prioritise_event_window: ["2023-11-01", "2026-07-01"]
+prioritise_share: 0.7
+random_seed: 20261101
+
+# 10-K sections to extract. Text is truncated to max_chars per section.
+sections: ["risk_factors", "mdna"]
+max_chars: 24000

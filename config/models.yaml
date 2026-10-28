@@ -1,0 +1,84 @@
+# Models used in the cross-model design.
+#
+# Identification comes from staggered training cutoffs: an outcome that occurred
+# between two cutoffs is knowable to the later model only. Record each cutoff
+# from the model card or technical report and cite the source; the analysis is
+# only as good as these dates.
+#
+# Every model is called through an OpenAI-compatible endpoint, so the same code
+# works with OpenRouter, Together, Fireworks, a local vLLM server or Ollama.
+#   base_url_env: environment variable holding the endpoint URL
+#   api_key_env:  environment variable holding the key (empty for local servers)
+#
+# Two arms, so the result speaks both to the models researchers actually use
+# and to fully reproducible open-weight models.
+#
+#   Widely used (closed):  GPT-4o mini, GPT-4.1 mini, Gemini 2.5 Flash,
+#                          Claude Haiku 5.5. Cutoffs span Oct 2023 to Jun 2026.
+#   Open-weight:           Llama 3.3 70B, Llama 4 Maverick.
+#
+# Cutoffs as stated by the developers (verified 23 Oct 2026):
+#   gpt-4o-mini       "Training data (up to) Oct 2023"   Azure OpenAI model list
+#   gpt-4.1-mini      "May 31, 2024"                     Azure OpenAI model list
+#   gemini-2.5-flash  "Knowledge cutoff January 2025"    Gemini API model page
+#   claude-haiku-5.5  reliable knowledge cutoff Jun 2026 Claude models overview
+#   llama-3.3-70b     pretraining data cutoff December 2023  Llama model card
+#   llama-4-maverick  pretraining data cutoff August 2024    Llama model card
+# Month-level cutoffs are set to the first day of the following month, so an
+# event dated within the cutoff month counts as knowable.
+#
+# Optional per-model keys: max_tokens (overrides generation.max_tokens) and
+# extra_body (passed through to the provider, e.g. to switch off thinking).
+
+models:
+  - key: gpt4omini
+    model_id: "openai/gpt-4o-mini-2024-07-18"
+    training_cutoff: "2023-11-01"
+    cutoff_source: "https://learn.microsoft.com/azure/ai-services/openai/concepts/models"
+    base_url_env: LLM_BASE_URL
+    api_key_env: LLM_API_KEY
+  - key: gpt41mini
+    model_id: "openai/gpt-4.1-mini"
+    training_cutoff: "2024-06-01"
+    cutoff_source: "https://learn.microsoft.com/azure/ai-services/openai/concepts/models"
+    base_url_env: LLM_BASE_URL
+    api_key_env: LLM_API_KEY
+  - key: gemini25flash
+    model_id: "google/gemini-2.5-flash"
+    training_cutoff: "2025-02-01"
+    cutoff_source: "https://ai.google.dev/gemini-api/docs/models/gemini-2.5-flash"
+    base_url_env: LLM_BASE_URL
+    api_key_env: LLM_API_KEY
+    max_tokens: 1200
+    extra_body: {reasoning: {enabled: false}}
+  - key: haiku55
+    model_id: "anthropic/claude-haiku-5.5"
+    training_cutoff: "2026-07-01"
+    cutoff_source: "https://platform.claude.com/docs/en/models/overview"
+    base_url_env: LLM_BASE_URL
+    api_key_env: LLM_API_KEY
+    max_tokens: 1200
+    extra_body: {reasoning: {enabled: false}}
+  - key: llama33
+    model_id: "meta-llama/llama-3.3-70b-instruct"
+    training_cutoff: "2024-01-01"
+    cutoff_source: "https://github.com/meta-llama/llama-models/blob/main/models/llama3_3/MODEL_CARD.md"
+    base_url_env: LLM_BASE_URL
+    api_key_env: LLM_API_KEY
+  - key: llama4
+    model_id: "meta-llama/llama-4-maverick"
+    training_cutoff: "2024-09-01"
+    cutoff_source: "https://github.com/meta-llama/llama-models/blob/main/models/llama4/MODEL_CARD.md"
+    base_url_env: LLM_BASE_URL
+    api_key_env: LLM_API_KEY
+
+# Model used to paraphrase text for the highest masking rung. Use the model
+# with the EARLIEST cutoff so that paraphrasing cannot inject outcome knowledge.
+paraphraser: gpt4omini
+
+generation:
+  temperature: 0
+  seed: 7
+  max_tokens: 400
+  request_timeout_s: 120
+  max_retries: 4
