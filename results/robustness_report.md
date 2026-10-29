@@ -41,24 +41,30 @@
 
 ## knows_checks
 
-| task       | check                               |    coef |     se |      p |   coef_sd |   n_yes |   ci_low |   ci_high |
-|:-----------|:------------------------------------|--------:|-------:|-------:|----------:|--------:|---------:|----------:|
-| prediction | falsification: yes_knowable         |  2.8935 | 1.7021 | 0.0891 |    0.1269 |     198 | nan      |  nan      |
-| prediction | falsification: yes_unknowable_event | -5.3035 | 7.0337 | 0.4508 |   -0.2325 |      15 | nan      |  nan      |
-| prediction | falsification: yes_control          |  2.2263 | 1.1019 | 0.0433 |    0.0976 |     193 | nan      |  nan      |
-| prediction | without Llama 4 Maverick            |  3.7105 | 2.0714 | 0.0732 |    0.1722 |     nan | nan      |  nan      |
-| prediction | re-identification split: kk         |  0.8219 | 3.817  | 0.8295 |    0.036  |     nan | nan      |  nan      |
-| prediction | re-identification split: kk_hit     |  2.3798 | 4.0282 | 0.5547 |    0.1043 |     nan | nan      |  nan      |
-| prediction | re-identification split: know_hit   |  0.183  | 2.0435 | 0.9286 |    0.008  |     nan | nan      |  nan      |
-| prediction | raw minus paraphrased (bootstrap)   |  3.4768 | 1.6151 | 0.0533 |  nan      |     nan |   0.0045 |    6.5359 |
-| coding     | falsification: yes_knowable         |  0.0217 | 0.0805 | 0.7872 |    0.0122 |     198 | nan      |  nan      |
-| coding     | falsification: yes_unknowable_event |  0.2413 | 0.1552 | 0.1199 |    0.1351 |      15 | nan      |  nan      |
-| coding     | falsification: yes_control          | -0.0011 | 0.056  | 0.985  |   -0.0006 |     144 | nan      |  nan      |
-| coding     | without Llama 4 Maverick            |  0.0128 | 0.0869 | 0.8832 |    0.007  |     nan | nan      |  nan      |
-| coding     | re-identification split: kk         | -0.5705 | 0.2459 | 0.0203 |   -0.3194 |     nan | nan      |  nan      |
-| coding     | re-identification split: kk_hit     |  0.6339 | 0.247  | 0.0103 |    0.3549 |     nan | nan      |  nan      |
-| coding     | re-identification split: know_hit   | -0.1013 | 0.1498 | 0.4988 |   -0.0567 |     nan | nan      |  nan      |
-| coding     | raw minus paraphrased (bootstrap)   |  0.0221 | 0.0876 | 0.9467 |  nan      |     nan |  -0.1616 |    0.1574 |
+| task       | check                                            |    coef |     se |      p |   coef_sd |   n_yes |   ci_low |   ci_high |
+|:-----------|:-------------------------------------------------|--------:|-------:|-------:|----------:|--------:|---------:|----------:|
+| prediction | falsification: yes_knowable                      |  2.8935 | 1.7021 | 0.0891 |    0.1269 |     198 | nan      |  nan      |
+| prediction | falsification: yes_unknowable_event              | -5.3035 | 7.0337 | 0.4508 |   -0.2325 |      15 | nan      |  nan      |
+| prediction | falsification: yes_control                       |  2.2263 | 1.1019 | 0.0433 |    0.0976 |     193 | nan      |  nan      |
+| prediction | recall minus belief (knowable yes - control yes) |  0.6673 | 2.0278 | 0.7421 |  nan      |     nan |  -3.3071 |    4.6417 |
+| prediction | falsification without Llama 4: yes_control       |  2.48   | 1.339  | 0.064  |  nan      |      77 | nan      |  nan      |
+| prediction | falsification without Llama 4: yes_knowable      |  3.5594 | 1.9918 | 0.0739 |  nan      |     150 | nan      |  nan      |
+| prediction | without Llama 4 Maverick                         |  3.7105 | 2.0714 | 0.0732 |    0.1722 |     nan | nan      |  nan      |
+| prediction | re-identification split: kk                      |  0.8219 | 3.817  | 0.8295 |    0.036  |     198 | nan      |  nan      |
+| prediction | re-identification split: kk_hit                  |  2.3798 | 4.0282 | 0.5547 |    0.1043 |     186 | nan      |  nan      |
+| prediction | re-identification split: know_hit                |  0.183  | 2.0435 | 0.9286 |    0.008  |     474 | nan      |  nan      |
+| prediction | raw minus paraphrased (bootstrap)                |  3.4768 | 1.6151 | 0.0533 |  nan      |     nan |   0.0045 |    6.5359 |
+| coding     | falsification: yes_knowable                      |  0.0217 | 0.0805 | 0.7872 |    0.0122 |     198 | nan      |  nan      |
+| coding     | falsification: yes_unknowable_event              |  0.2413 | 0.1552 | 0.1199 |    0.1351 |      15 | nan      |  nan      |
+| coding     | falsification: yes_control                       | -0.0011 | 0.056  | 0.985  |   -0.0006 |     144 | nan      |  nan      |
+| coding     | recall minus belief (knowable yes - control yes) |  0.0228 | 0.0985 | 0.817  |  nan      |     nan |  -0.1702 |    0.2158 |
+| coding     | falsification without Llama 4: yes_control       |  0.1341 | 0.0765 | 0.0796 |  nan      |      62 | nan      |  nan      |
+| coding     | falsification without Llama 4: yes_knowable      |  0.0133 | 0.0872 | 0.8789 |  nan      |     150 | nan      |  nan      |
+| coding     | without Llama 4 Maverick                         |  0.0128 | 0.0869 | 0.8832 |    0.007  |     nan | nan      |  nan      |
+| coding     | re-identification split: kk                      | -0.5705 | 0.2459 | 0.0203 |   -0.3194 |     198 | nan      |  nan      |
+| coding     | re-identification split: kk_hit                  |  0.6339 | 0.247  | 0.0103 |    0.3549 |     186 | nan      |  nan      |
+| coding     | re-identification split: know_hit                | -0.1013 | 0.1498 | 0.4988 |   -0.0567 |     474 | nan      |  nan      |
+| coding     | raw minus paraphrased (bootstrap)                |  0.0221 | 0.0876 | 0.9467 |  nan      |     nan |  -0.1616 |    0.1574 |
 
 ## knows_diff
 
@@ -150,6 +156,15 @@
 | Prediction, pooled            |    -0.0051 |     -0.0462 |       0.0361 |  0.021  |   0.0588 | 0.8099 |             692 |
 | Coding, distress (bankruptcy) |    -0.091  |     -0.1885 |       0.0065 |  0.0497 |   0.1393 | 0.0674 |             105 |
 | Coding, distress (pooled)     |    -0.0248 |     -0.0768 |       0.0272 |  0.0265 |   0.0743 | 0.3504 |             343 |
+
+## shifts_bankruptcy_filers
+
+| spec                          |   shift_months |   gamma_sd |   ci_low_sd |   ci_high_sd |   se_sd |   mde_sd |      p |   n_identifying |
+|:------------------------------|---------------:|-----------:|------------:|-------------:|--------:|---------:|-------:|----------------:|
+| Coding, distress (bankruptcy) |             -6 |    -0.0388 |     -0.12   |       0.0424 |  0.0414 |   0.116  | 0.3493 |             112 |
+| Coding, distress (bankruptcy) |             -3 |    -0.054  |     -0.1296 |       0.0216 |  0.0386 |   0.108  | 0.1619 |             111 |
+| Coding, distress (bankruptcy) |              3 |    -0.0309 |     -0.1339 |       0.072  |  0.0525 |   0.1471 | 0.556  |              85 |
+| Coding, distress (bankruptcy) |              6 |    -0.0655 |     -0.1832 |       0.0523 |  0.0601 |   0.1682 | 0.2758 |              61 |
 
 ## signal
 

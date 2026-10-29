@@ -420,6 +420,18 @@ def stacked(data) -> pd.DataFrame:
 STACK_WINDOWS: list[dict] = []
 
 
+def shifts_bankruptcy_filers(data) -> pd.DataFrame:
+    """Cutoff shifts for coded distress among bankruptcy filers (main specification)."""
+    out = []
+    g0 = data["Coding, distress (bankruptcy)"]
+    g0 = g0[g0.level == "raw"]
+    for months in (-6, -3, 3, 6):
+        g = g0.copy()
+        g["cutoff"] = (pd.to_datetime(g.cutoff) + pd.DateOffset(months=months)).dt.strftime("%Y-%m-%d")
+        out.append(row(est(g), spec="Coding, distress (bankruptcy)", shift_months=months))
+    return pd.DataFrame(out)
+
+
 def donut(data, days: int = 182) -> pd.DataFrame:
     """Drop event-model pairs whose event falls within `days` of that model's cutoff."""
     out = []
@@ -473,6 +485,27 @@ def knows_checks(reps: int = 300) -> pd.DataFrame:
                          "coef": fit.params[c] * unit, "se": fit.bse[c] * unit,
                          "p": fit.pvalues[c], "coef_sd": fit.params[c] / sd,
                          "n_yes": int(g[c].sum())})
+        # Recall minus belief: does a correct "yes" move scores more than a wrong one?
+        cov = fit.cov_params()
+        diff = fit.params["yes_knowable"] - fit.params["yes_control"]
+        dse = float(np.sqrt(cov.loc["yes_knowable", "yes_knowable"]
+                            + cov.loc["yes_control", "yes_control"]
+                            - 2 * cov.loc["yes_knowable", "yes_control"]))
+        from scipy.stats import norm
+        rows.append({"task": task, "check": "recall minus belief (knowable yes - control yes)",
+                     "coef": diff * unit, "se": dse * unit, "p": float(2 * norm.sf(abs(diff / dse))),
+                     "ci_low": (diff - 1.96 * dse) * unit, "ci_high": (diff + 1.96 * dse) * unit})
+        # The control falsification without Llama 4 Maverick (highest false-alarm rate).
+        h = g[g.model != "llama4"].copy()
+        h, sz2 = _size_cols(h.drop(columns=[c for c in h.columns if c.startswith("sz")]))
+        Xw2, yw2 = _design(h, h.cutoff, sz2 + ["yes_knowable", "yes_unknowable_event", "yes_control"])
+        f2 = _ols(Xw2, yw2, h.cik)
+        rows.append({"task": task, "check": "falsification without Llama 4: yes_control",
+                     "coef": f2.params["yes_control"] * unit, "se": f2.bse["yes_control"] * unit,
+                     "p": f2.pvalues["yes_control"], "n_yes": int(h.yes_control.sum())})
+        rows.append({"task": task, "check": "falsification without Llama 4: yes_knowable",
+                     "coef": f2.params["yes_knowable"] * unit, "se": f2.bse["yes_knowable"] * unit,
+                     "p": f2.pvalues["yes_knowable"], "n_yes": int(h.yes_knowable.sum())})
         # Without Llama 4 Maverick, whose probe says yes to 9% of controls.
         h = d[(d.level == "raw") & (d.model != "llama4")].copy()
         h["knows"] = h.says_yes * h.outcome
@@ -493,7 +526,8 @@ def knows_checks(reps: int = 300) -> pd.DataFrame:
         for c in ["kk", "kk_hit", "know_hit"]:
             rows.append({"task": task, "check": f"re-identification split: {c}",
                          "coef": fit.params[c] * unit, "se": fit.bse[c] * unit,
-                         "p": fit.pvalues[c], "coef_sd": fit.params[c] / sd})
+                         "p": fit.pvalues[c], "coef_sd": fit.params[c] / sd,
+                         "n_yes": int((h[c] != 0).sum())})
         # Raw against paraphrased: firm bootstrap of the difference in the knowledge effect.
         def lam(frame):
             f = frame.copy()
@@ -538,6 +572,7 @@ def main() -> None:
         "stacked_windows": None,
         "donut": pd.concat([donut(data, 182), donut(data, 365)]),
         "knows_checks": knows_checks(),
+        "shifts_bankruptcy_filers": shifts_bankruptcy_filers(data),
         "permutation": permutation(data),
         "first_stage": first_stage(),
         "knows_diff": knows_diff(),
