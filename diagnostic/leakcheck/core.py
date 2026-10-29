@@ -50,6 +50,7 @@ class LeakageResult:
     n_obs: int
     n_units: int
     n_identifying_units: int    # units whose outcome is knowable to some models only
+    mde_std: float = float("nan")  # minimum detectable effect, SD units (80% power, 5% two-sided)
     moderator_interaction: float | None = None
     moderator_se: float | None = None
     moderator_p: float | None = None
@@ -83,10 +84,17 @@ def estimate(
     cluster: str | None = None,
     moderator: str | None = None,
     standardise_moderator: bool = True,
+    model_controls: list[str] | tuple[str, ...] = (),
     label: dict | None = None,
 ) -> LeakageResult:
-    """Estimate gamma on a long frame with one row per (unit, model)."""
-    d = df[[c for c in {unit, model, score, outcome, event_date, cutoff, cluster, moderator} if c]].copy()
+    """Estimate gamma on a long frame with one row per (unit, model).
+
+    model_controls: document-level covariates (e.g. log assets) given a separate
+    slope for each model. Without them, a later model's different treatment of,
+    say, large firms can load onto knowability and onto its interactions.
+    """
+    keep = {unit, model, score, outcome, event_date, cutoff, cluster, moderator, *model_controls}
+    d = df[[c for c in keep if c]].copy()
     d = d[d[score].notna()]
     d["_knowable"] = add_knowable(d, outcome, event_date, cutoff)
 
@@ -98,6 +106,11 @@ def estimate(
     # outcome interaction is the reference; including all would be collinear.
     for m in models[1:]:
         X[f"outcome:model[{m}]"] = ((d[model] == m) & (d[outcome] == 1)).astype(float)
+    for c in model_controls:
+        zc = d[c].astype(float)
+        zc = ((zc - zc.mean()) / zc.std(ddof=0)).fillna(0) if zc.std(ddof=0) > 0 else zc * 0
+        for m in models[1:]:
+            X[f"{c}:model[{m}]"] = zc * (d[model] == m)
     X["knowable"] = d["_knowable"]
     if moderator:
         z = d[moderator].astype(float)
@@ -128,6 +141,7 @@ def estimate(
         gamma_std=float(gamma / y.std(ddof=0)) if y.std(ddof=0) > 0 else float("nan"),
         score_sd=float(y.std(ddof=0)),
         n_obs=int(len(d)), n_units=int(d[unit].nunique()), n_identifying_units=identifying,
+        mde_std=float(2.8 * se / y.std(ddof=0)) if y.std(ddof=0) > 0 else float("nan"),
         label=label or {},
     )
     if moderator and "knowable:moderator" in Xw.columns:
@@ -176,4 +190,5 @@ def verdict(r: LeakageResult, threshold_std: float = 0.1) -> str:
         return (f"Small but detectable leakage: {r.gamma_std:+.2f} SD (p = {r.p_value:.3g}); "
                 "probably negligible for most uses.")
     return (f"No detectable leakage: estimate {r.gamma_std:+.2f} SD, 95% CI "
-            f"[{r.ci_low:.3g}, {r.ci_high:.3g}] in score units.")
+            f"[{r.ci_low:.3g}, {r.ci_high:.3g}] in score units. The design could detect "
+            f"effects of {r.mde_std:.2f} SD or more; smaller leakage cannot be ruled out.")

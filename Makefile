@@ -26,6 +26,9 @@ probe:
 
 analysis:
 	$(PY) -m analysis.leakage_index
+	$(PY) -m analysis.sensitivity
+	$(PY) -m analysis.knowledge
+	$(PY) -m analysis.robustness
 	$(PY) -m analysis.figures
 
 all: edgar sample texts models probe analysis

@@ -80,24 +80,24 @@ make analysis    # estimates, report and figures
 
 Each step resumes where it stopped. Start small with `python -m coding.run_models --limit 50` to check costs before a full run.
 
-## Results (full run, 28 October 2026)
+## Results (full run, 28 October 2026; identification checks 29 October 2026)
 
-1,473 filings × 6 models × 4 masking rungs: 70,704 coding and prediction calls and 35,352 re-identification calls, all cached in `results/*.jsonl.gz`.
+1,473 filings × 6 models × 4 masking rungs: 70,704 coding and prediction calls, 35,352 re-identification calls and 8,838 knowledge-probe calls, all cached in `results/*.jsonl.gz`. All estimates include model-specific outcome and size slopes.
 
-- **Masking names does not hide identity.** With names, tickers and URLs removed, models still name 45% (GPT-4o mini) to 73% (Claude Haiku 5.5) of firms; generalising dates and amounts barely helps (42% to 74%). Paraphrasing brings identification down to 2% to 13%.
-- **Average leakage is small and bounded.** No task, construct or rung shows detectable leakage. On raw text the 95% interval excludes effects larger than 0.06 SD for outcome prediction and 0.05 SD for coded financial distress, and the result holds when every stated cutoff is shifted by up to six months (`results/cutoff_sensitivity.csv`).
-- **It rises with prominence.** In outcome prediction, leakage increases with firm size (+0.014 in predicted probability per SD of log assets, p = 0.001) and the gradient disappears after paraphrasing (p = 0.10). For coded distress the size interaction runs the other way, which needs further work.
+- **Masking names does not hide identity.** With names, tickers and URLs removed, models still name the firm behind 45% (GPT-4o mini) to 73% (Claude Haiku 5.5) of filings; generalising dates and amounts barely helps (42% to 74%). Paraphrasing brings identification down to 2% to 13%.
+- **No average leakage is detectable, but only large effects could be.** Minimum detectable effects (80% power) are 0.23 SD for bankruptcy prediction, 0.10 SD for prediction pooled over both outcomes and 0.07 SD for coded distress. A placebo (controls take their event's date), leave-one-model-out estimates, model × time-to-event slopes, permutation inference over all 720 cutoff assignments and ±6-month cutoff shifts all agree (`results/robustness_report.md`).
+- **Models know about many bankruptcies, almost no restatements.** Asked directly (`probes/knowledge.py`), models report 13% to 49% of bankruptcies before their cutoff and 0% to 5% after it (16% for Llama 4 Maverick); knowability raises reported bankruptcies by 15 points (p < 0.001). Restatements: 0% to 9%, no more than for controls.
+- **Where they know, prediction shifts; coding does not move.** When a model reports knowing of a bankruptcy, its predicted probability is 3.0 points higher (0.13 SD, p = 0.08 raw; 3.7 points, p = 0.05 generalised); paraphrasing removes it. Coded financial distress does not move (0.01 SD); the difference between the tasks is 0.12 SD (p = 0.09).
+- **Corrected reading.** An earlier version reported leakage rising with firm size. The placebo reproduces that interaction exactly, and it disappears once each model has its own size slope (`results/robustness_model_size.csv`), so it reflected how models treat large firms, not leakage. Use `--model-controls` for covariates of this kind.
 
-- **Models mostly do not know what happened.** Asked directly (`probes/knowledge.py`), models report a restatement they could know about 0% to 9% of the time and a bankruptcy 13% to 49% of the time, against false alarms of 0% to 9% for control firms.
-- **Where they know, prediction leaks; coding does not.** When a model knows of a bankruptcy, its predicted bankruptcy probability for that filing is 3.7 points higher (p = 0.049), about 0.16 SD; paraphrasing removes it (p = 0.81). Coded financial distress does not move (p = 0.88).
-
-See `results/report.md`, `results/knowledge_report.md` and `results/figures/`.
+See `results/report.md`, `results/knowledge_report.md`, `results/robustness_report.md` and `results/figures/`.
 
 ## Outputs
 
 | File | Contents |
 |---|---|
-| `results/leakage_estimates.csv` | γ, SE, CI, γ in SD units, fame interaction, per task, measure and masking level |
+| `results/leakage_estimates.csv` | γ, SE, CI, γ in SD units, minimum detectable effect, size interaction, per task, measure and masking level |
+| `results/robustness_*.csv` | Placebo, permutation, leave-one-model-out, time-to-event, size-slope and power checks |
 | `results/auc.csv` | Discrimination per model, on knowable versus unknowable events |
 | `results/reid_rates.csv` | Share of firms re-identified per model and masking level |
 | `results/report.md` | Plain-language verdicts |
@@ -108,7 +108,7 @@ See `results/report.md`, `results/knowledge_report.md` and `results/figures/`.
 Prepare a long CSV with one row per (document, model): `unit, model, score, outcome, event_date` and optionally a cluster column and a grouping column. Then:
 
 ```bash
-python -m diagnostic.leakcheck scores.csv --cutoffs cutoffs.yaml --cluster firm --by level
+python -m diagnostic.leakcheck scores.csv --cutoffs cutoffs.yaml --cluster firm --model-controls log_assets --by level
 ```
 
 `cutoffs.yaml` maps each model name to its training cutoff date. In Python:
@@ -116,8 +116,9 @@ python -m diagnostic.leakcheck scores.csv --cutoffs cutoffs.yaml --cluster firm 
 ```python
 from diagnostic.leakcheck import estimate, verdict
 r = estimate(df, unit="unit", model="model", score="score", outcome="outcome",
-             event_date="event_date", cutoff="cutoff", cluster="firm")
-print(verdict(r))
+             event_date="event_date", cutoff="cutoff", cluster="firm",
+             model_controls=["log_assets"])   # optional: a separate slope per model
+print(verdict(r))   # includes the minimum detectable effect
 ```
 
 ## The masking ladder
@@ -131,7 +132,7 @@ print(verdict(r))
 
 ## Simulation
 
-`simulate/` builds a synthetic corpus with known ground truth and a fake model that leaks when it recognises a firm whose outcome precedes its cutoff. The real masking, model-running, probe and analysis code runs unchanged; only the model is fake. With planted leakage the estimator recovers it and it falls to zero at the paraphrase rung; with no planted leakage every estimate is null.
+`simulate/` builds a synthetic corpus with known ground truth and a fake model that leaks when it recognises a firm whose outcome precedes its cutoff. The real masking, model-running, probe and analysis code runs unchanged; only the model is fake. With planted leakage the estimator recovers it and it falls to zero at the paraphrase rung; with no planted leakage every estimate is null. `python -m simulate.run_simulation --firms 1500 --seeds 21 31 41 51 --no-null` repeats the check on further synthetic worlds; across five worlds the average error is 3% to 7% of the planted effect.
 
 ## Layout
 

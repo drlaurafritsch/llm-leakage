@@ -80,7 +80,7 @@ def estimates_for(df: pd.DataFrame, task: str, pooled_label: str | None) -> tupl
         label = {"task": task, "measure": measure, "level": level}
         try:
             r = estimate(g, unit="unit", model="model", score="score", outcome="outcome",
-                         event_date="event_date", cutoff="cutoff", cluster="cik",
+                         event_date="event_date", cutoff="cutoff", cluster="cik", model_controls=["log_assets"],
                          moderator="log_assets", label=label)
         except ValueError as err:
             rows.append({**label, "note": str(err)})
@@ -113,7 +113,7 @@ def reid_with_leakage(long: pd.DataFrame) -> pd.DataFrame | None:
         try:
             r = estimate(g.fillna({"hit": 0}), unit="unit", model="model", score="score",
                          outcome="outcome", event_date="event_date", cutoff="cutoff",
-                         cluster="cik", moderator="hit", standardise_moderator=False,
+                         cluster="cik", model_controls=["log_assets"], moderator="hit", standardise_moderator=False,
                          label={"level": level})
         except ValueError:
             continue

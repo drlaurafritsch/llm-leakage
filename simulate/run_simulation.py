@@ -36,7 +36,7 @@ SIM_MODELS = {
 }
 
 
-def run_scenario(name: str, leak: float, firms: int) -> Path:
+def run_scenario(name: str, leak: float, firms: int, seed: int = 11) -> Path:
     workdir = ROOT / "simulate" / "runs" / name
     if workdir.exists():
         shutil.rmtree(workdir)
@@ -54,7 +54,7 @@ def run_scenario(name: str, leak: float, firms: int) -> Path:
         subprocess.run([sys.executable, "-m", *args], cwd=ROOT, env=env, check=True)
 
     gen = (f"from simulate.world import build_world, write_inputs; "
-           f"write_inputs(build_world(n_firms={firms}))")
+           f"write_inputs(build_world(n_firms={firms}, seed={seed}))")
     subprocess.run([sys.executable, "-c", gen], cwd=ROOT, env=env, check=True)
     step("coding.run_models", "--workers", "1")
     step("probes.reidentify", "--workers", "1")
@@ -67,9 +67,15 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--leak", type=float, default=0.3)
     p.add_argument("--firms", type=int, default=600)
+    p.add_argument("--seeds", type=int, nargs="*", default=[11],
+                   help="world seeds; more than one gives a Monte Carlo check of bias")
+    p.add_argument("--no-null", action="store_true")
     a = p.parse_args()
-    run_scenario("leak", a.leak, a.firms)
-    run_scenario("null", 0.0, a.firms)
+    for seed in a.seeds:
+        tag = "" if seed == 11 else f"_s{seed}"
+        run_scenario(f"leak{tag}", a.leak, a.firms, seed)
+        if not a.no_null:
+            run_scenario(f"null{tag}", 0.0, a.firms, seed)
 
 
 if __name__ == "__main__":

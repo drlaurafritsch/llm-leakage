@@ -48,6 +48,8 @@ def main() -> None:
     p.add_argument("--event-date", default="event_date")
     p.add_argument("--cluster", default=None)
     p.add_argument("--moderator", default=None)
+    p.add_argument("--model-controls", nargs="*", default=[],
+                   help="document covariates given a separate slope for each model")
     p.add_argument("--by", default=None, help="Column to split estimates by, e.g. level")
     p.add_argument("--json", action="store_true", help="Print JSON instead of text")
     a = p.parse_args()
@@ -64,7 +66,7 @@ def main() -> None:
     for key, g in groups:
         r = estimate(g, unit=a.unit, model=a.model, score=a.score, outcome=a.outcome,
                      event_date=a.event_date, cutoff="_cutoff", cluster=a.cluster,
-                     moderator=a.moderator, label={a.by: key} if a.by else {})
+                     moderator=a.moderator, model_controls=a.model_controls, label={a.by: key} if a.by else {})
         aucs = auc_table(g, model=a.model, score=a.score, outcome=a.outcome,
                          event_date=a.event_date, cutoff="_cutoff")
         out.append({"result": r.as_row(), "verdict": verdict(r), "auc": aucs.to_dict("records")})

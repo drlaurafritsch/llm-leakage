@@ -43,6 +43,31 @@ def test_estimate_recovers_planted_gamma(gamma):
         assert r.p_value < 1e-4
 
 
+def test_model_controls_remove_size_confound():
+    """A later model that scores large firms higher must not look like leakage."""
+    rng = np.random.default_rng(3)
+    rows = []
+    for u in range(1500):
+        size = rng.normal()
+        outcome = int(rng.random() < 0.4)
+        # Large firms' events come sooner, so they are knowable to more models.
+        days = int(np.clip(rng.normal(3 * 365 - 400 * size, 300), 0, 6 * 365))
+        event = pd.Timestamp("2019-06-01") + pd.Timedelta(days=days)
+        for m, size_slope in (("a", 0.0), ("b", 0.0), ("c", 0.6)):
+            score = 0.5 * outcome + size_slope * size + rng.normal(0, 0.5)
+            rows.append({"unit": u, "model": m, "score": score, "outcome": outcome,
+                         "event_date": event if outcome else pd.NaT, "cutoff": CUTOFFS[m],
+                         "size": size})
+    df = pd.DataFrame(rows)
+    kw = dict(unit="unit", model="model", score="score", outcome="outcome",
+              event_date="event_date", cutoff="cutoff")
+    naive = estimate(df, **kw)
+    fixed = estimate(df, model_controls=["size"], **kw)
+    assert naive.p_value < 0.01          # spurious "leakage" without the control
+    assert abs(fixed.gamma) < 3 * fixed.se + 0.02
+    assert np.isfinite(fixed.mde_std) and fixed.mde_std > 0
+
+
 def test_unidentified_design_raises():
     df = panel(0.3)
     df["cutoff"] = "2030-01-01"  # every outcome knowable to every model

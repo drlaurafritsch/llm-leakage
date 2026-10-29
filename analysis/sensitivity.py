@@ -28,7 +28,8 @@ def main() -> None:
             d = df[df.level == "raw"].copy()
             d["shifted"] = (pd.to_datetime(d.cutoff) + pd.DateOffset(months=months)).dt.strftime("%Y-%m-%d")
             r = estimate(d, unit="unit", model="model", score="score", outcome="outcome",
-                         event_date="event_date", cutoff="shifted", cluster="cik")
+                         event_date="event_date", cutoff="shifted", cluster="cik",
+                         model_controls=["log_assets"])
             rows.append({"shift_months": months, "task": task, "measure": measure,
                          "gamma_std": r.gamma_std, "ci_low_std": r.ci_low / r.score_sd,
                          "ci_high_std": r.ci_high / r.score_sd, "p_value": r.p_value,

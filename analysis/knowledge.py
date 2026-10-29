@@ -32,6 +32,8 @@ def status(df: pd.DataFrame) -> pd.Series:
 
 def main() -> None:
     kn = pd.read_csv(RESULTS_DIR / "knowledge_scored.csv", dtype={"doc_id": str})
+    sizes = pd.read_csv(INTERIM_DIR / "sample.csv", dtype={"doc_id": str})[["doc_id", "log_assets"]]
+    kn = kn.merge(sizes, on="doc_id", how="left")
     kn["status"] = status(kn)
 
     rates = (kn.groupby(["model", "measure", "status"])
@@ -45,7 +47,7 @@ def main() -> None:
     kn["unit"] = kn["doc_id"] + ":" + kn["measure"]
     for label, g in [("pooled", kn)] + [(m, g) for m, g in kn.groupby("measure")]:
         r = estimate(g, unit="unit", model="model", score="says_yes", outcome="outcome",
-                     event_date="event_date", cutoff="cutoff", cluster="cik",
+                     event_date="event_date", cutoff="cutoff", cluster="cik", model_controls=["log_assets"],
                      label={"measure": label})
         first.append(r.as_row())
     first = pd.DataFrame(first)
@@ -67,7 +69,7 @@ def main() -> None:
         for level, g in d.groupby("level"):
             try:
                 r = estimate(g, unit="unit", model="model", score="score", outcome="outcome",
-                             event_date="event_date", cutoff="cutoff", cluster="cik",
+                             event_date="event_date", cutoff="cutoff", cluster="cik", model_controls=["log_assets"],
                              moderator="knows", standardise_moderator=False,
                              label={"task": task, "level": level})
             except ValueError:
@@ -91,7 +93,7 @@ def main() -> None:
         d["knows"] = d["says_yes"] * d["outcome"]
         for level, g in d.groupby("level"):
             r = estimate(g, unit="unit", model="model", score="score", outcome="outcome",
-                         event_date="event_date", cutoff="cutoff", cluster="cik",
+                         event_date="event_date", cutoff="cutoff", cluster="cik", model_controls=["log_assets"],
                          moderator="knows", standardise_moderator=False,
                          label={"task": task, "level": level})
             row = r.as_row()
