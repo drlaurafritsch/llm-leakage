@@ -148,7 +148,7 @@ def leave_one_out(data) -> pd.DataFrame:
         for m in ["none"] + sorted(g.model.unique()):
             h = g if m == "none" else g[g.model != m]
             try:
-                out.append(row(est(h, moderator="log_assets"), spec=name, dropped=m))
+                out.append(row(est(h), spec=name, dropped=m))
             except ValueError:
                 out.append({"spec": name, "dropped": m})
     return pd.DataFrame(out)
