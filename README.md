@@ -149,7 +149,7 @@ tests/             unit tests
 
 ## Citation
 
-Fritsch, L. (2026). *The model has read the future: Detecting and correcting look-ahead leakage in LLM-coded organisational data.* Proposal to the *Organization Science* special issue "AI-Enabled Frontiers in Organizational Science". Code: https://github.com/drlaurafritsch/llm-leakage
+Fritsch, L. (2026). *Spoiler alert: When language models know how the story ends.* Proposal to the *Organization Science* special issue "AI-Enabled Frontiers in Organizational Science". Code: https://github.com/drlaurafritsch/llm-leakage
 
 ## Known limitations
 
