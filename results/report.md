@@ -1,40 +1,40 @@
 # Leakage report
 
 ## construct: financial_distress
-- **raw**: No detectable leakage: estimate -0.00 SD, 95% CI [-0.0955, 0.0819] in score units. The design could detect effects of 0.07 SD or more; smaller leakage cannot be ruled out.
-- **names**: No detectable leakage: estimate +0.00 SD, 95% CI [-0.0862, 0.0988] in score units. The design could detect effects of 0.07 SD or more; smaller leakage cannot be ruled out.
-- **generalised**: No detectable leakage: estimate +0.01 SD, 95% CI [-0.0668, 0.111] in score units. The design could detect effects of 0.07 SD or more; smaller leakage cannot be ruled out.
-- **paraphrased**: No detectable leakage: estimate -0.03 SD, 95% CI [-0.144, 0.0434] in score units. The design could detect effects of 0.08 SD or more; smaller leakage cannot be ruled out.
+- **raw**: No detectable leakage: estimate -0.00 SD, 95% CI [-0.0934, 0.0841] in score units. The design could detect effects of 0.07 SD or more; smaller leakage cannot be ruled out.
+- **names**: No detectable leakage: estimate +0.00 SD, 95% CI [-0.0843, 0.101] in score units. The design could detect effects of 0.07 SD or more; smaller leakage cannot be ruled out.
+- **generalised**: No detectable leakage: estimate +0.01 SD, 95% CI [-0.0658, 0.112] in score units. The design could detect effects of 0.07 SD or more; smaller leakage cannot be ruled out.
+- **paraphrased**: No detectable leakage: estimate -0.03 SD, 95% CI [-0.143, 0.0446] in score units. The design could detect effects of 0.08 SD or more; smaller leakage cannot be ruled out.
 
 ## construct: managerial_optimism
-- **raw**: No detectable leakage: estimate +0.02 SD, 95% CI [-0.0606, 0.108] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **names**: No detectable leakage: estimate +0.03 SD, 95% CI [-0.0489, 0.123] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **generalised**: No detectable leakage: estimate +0.02 SD, 95% CI [-0.0656, 0.108] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **paraphrased**: No detectable leakage: estimate +0.04 SD, 95% CI [-0.0262, 0.109] in score units. The design could detect effects of 0.08 SD or more; smaller leakage cannot be ruled out.
+- **raw**: No detectable leakage: estimate +0.02 SD, 95% CI [-0.0639, 0.106] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **names**: No detectable leakage: estimate +0.03 SD, 95% CI [-0.053, 0.119] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **generalised**: No detectable leakage: estimate +0.02 SD, 95% CI [-0.0685, 0.106] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **paraphrased**: No detectable leakage: estimate +0.03 SD, 95% CI [-0.028, 0.108] in score units. The design could detect effects of 0.08 SD or more; smaller leakage cannot be ruled out.
 
 ## construct: risk_candour
-- **raw**: No detectable leakage: estimate -0.05 SD, 95% CI [-0.123, 0.022] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **names**: No detectable leakage: estimate -0.06 SD, 95% CI [-0.134, 0.0155] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
-- **generalised**: No detectable leakage: estimate -0.03 SD, 95% CI [-0.104, 0.0379] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **paraphrased**: No detectable leakage: estimate -0.06 SD, 95% CI [-0.172, 0.0121] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **raw**: No detectable leakage: estimate -0.05 SD, 95% CI [-0.125, 0.0196] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **names**: No detectable leakage: estimate -0.06 SD, 95% CI [-0.139, 0.0111] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
+- **generalised**: No detectable leakage: estimate -0.03 SD, 95% CI [-0.106, 0.0355] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **paraphrased**: No detectable leakage: estimate -0.07 SD, 95% CI [-0.176, 0.00891] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
 
 ## predict: all_outcomes
-- **raw**: No detectable leakage: estimate -0.02 SD, 95% CI [-0.0193, 0.011] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
-- **names**: No detectable leakage: estimate -0.03 SD, 95% CI [-0.0205, 0.00823] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **generalised**: No detectable leakage: estimate +0.00 SD, 95% CI [-0.0128, 0.0139] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
-- **paraphrased**: No detectable leakage: estimate -0.02 SD, 95% CI [-0.0155, 0.00806] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **raw**: No detectable leakage: estimate -0.02 SD, 95% CI [-0.0191, 0.0113] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
+- **names**: No detectable leakage: estimate -0.03 SD, 95% CI [-0.0202, 0.00859] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **generalised**: No detectable leakage: estimate +0.00 SD, 95% CI [-0.0127, 0.0141] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
+- **paraphrased**: No detectable leakage: estimate -0.02 SD, 95% CI [-0.0155, 0.00812] in score units. The design could detect effects of 0.10 SD or more; smaller leakage cannot be ruled out.
 
 ## predict: bankruptcy
-- **raw**: No detectable leakage: estimate +0.02 SD, 95% CI [-0.0313, 0.0426] in score units. The design could detect effects of 0.23 SD or more; smaller leakage cannot be ruled out.
-- **names**: No detectable leakage: estimate +0.01 SD, 95% CI [-0.0303, 0.0354] in score units. The design could detect effects of 0.21 SD or more; smaller leakage cannot be ruled out.
-- **generalised**: No detectable leakage: estimate +0.02 SD, 95% CI [-0.0357, 0.0444] in score units. The design could detect effects of 0.26 SD or more; smaller leakage cannot be ruled out.
-- **paraphrased**: No detectable leakage: estimate -0.08 SD, 95% CI [-0.0494, 0.017] in score units. The design could detect effects of 0.23 SD or more; smaller leakage cannot be ruled out.
+- **raw**: No detectable leakage: estimate +0.04 SD, 95% CI [-0.0273, 0.044] in score units. The design could detect effects of 0.22 SD or more; smaller leakage cannot be ruled out.
+- **names**: No detectable leakage: estimate +0.01 SD, 95% CI [-0.0287, 0.0352] in score units. The design could detect effects of 0.20 SD or more; smaller leakage cannot be ruled out.
+- **generalised**: No detectable leakage: estimate +0.01 SD, 95% CI [-0.0313, 0.038] in score units. The design could detect effects of 0.22 SD or more; smaller leakage cannot be ruled out.
+- **paraphrased**: No detectable leakage: estimate -0.08 SD, 95% CI [-0.0456, 0.0142] in score units. The design could detect effects of 0.21 SD or more; smaller leakage cannot be ruled out.
 
 ## predict: restatement
-- **raw**: No detectable leakage: estimate -0.02 SD, 95% CI [-0.0118, 0.00745] in score units. The design could detect effects of 0.12 SD or more; smaller leakage cannot be ruled out.
-- **names**: No detectable leakage: estimate -0.02 SD, 95% CI [-0.0126, 0.00693] in score units. The design could detect effects of 0.12 SD or more; smaller leakage cannot be ruled out.
-- **generalised**: No detectable leakage: estimate +0.05 SD, 95% CI [-0.00276, 0.015] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
-- **paraphrased**: No detectable leakage: estimate +0.06 SD, 95% CI [-0.00179, 0.0158] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
+- **raw**: No detectable leakage: estimate -0.00 SD, 95% CI [-0.0102, 0.00964] in score units. The design could detect effects of 0.12 SD or more; smaller leakage cannot be ruled out.
+- **names**: No detectable leakage: estimate -0.01 SD, 95% CI [-0.0108, 0.00936] in score units. The design could detect effects of 0.12 SD or more; smaller leakage cannot be ruled out.
+- **generalised**: No detectable leakage: estimate +0.06 SD, 95% CI [-0.0016, 0.0167] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
+- **paraphrased**: No detectable leakage: estimate +0.06 SD, 95% CI [-0.00157, 0.016] in score units. The design could detect effects of 0.11 SD or more; smaller leakage cannot be ruled out.
 
 ## Re-identification rate by masking level
 

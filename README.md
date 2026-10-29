@@ -75,7 +75,7 @@ make sample      # event firm-years and matched controls
 make texts       # risk factor and MD&A sections for the sample
 make models      # construct coding and prediction, all models and masking levels
 make probe       # re-identification probe
-make analysis    # estimates, report and figures
+make analysis    # estimates, knowledge split, identification checks and figures (about 10 minutes, no API keys; run in this order)
 ```
 
 Each step resumes where it stopped. Start small with `python -m coding.run_models --limit 50` to check costs before a full run.
@@ -85,10 +85,10 @@ Each step resumes where it stopped. Start small with `python -m coding.run_model
 1,473 filings × 6 models × 4 masking rungs: 70,704 coding and prediction calls, 35,352 re-identification calls and 8,838 knowledge-probe calls, all cached in `results/*.jsonl.gz`. All estimates include model-specific outcome and size slopes.
 
 - **Masking names does not hide identity.** With names, tickers and URLs removed, models still name the firm behind 45% (GPT-4o mini) to 73% (Claude Haiku 5.5) of filings; generalising dates and amounts barely helps (42% to 74%). Paraphrasing brings identification down to 2% to 13%.
-- **No average leakage is detectable, but only large effects could be.** Minimum detectable effects (80% power) are 0.23 SD for bankruptcy prediction, 0.10 SD for prediction pooled over both outcomes and 0.07 SD for coded distress. A placebo (controls take their event's date), leave-one-model-out estimates, model × time-to-event slopes, permutation inference over all 720 cutoff assignments and ±6-month cutoff shifts all agree (`results/robustness_report.md`).
-- **Models know about many bankruptcies, almost no restatements.** Asked directly (`probes/knowledge.py`), models report 13% to 49% of bankruptcies before their cutoff and 0% to 5% after it (16% for Llama 4 Maverick); knowability raises reported bankruptcies by 15 points (p < 0.001). Restatements: 0% to 9%, no more than for controls.
+- **No average leakage is detectable, but only large effects could be.** Minimum detectable effects (80% power) are 0.23 SD for bankruptcy prediction, 0.11 SD for prediction pooled over both outcomes and 0.07 SD for coded distress. A placebo (controls take their event's date), leave-one-model-out estimates, model × time-to-event slopes, permutation inference over all 720 cutoff assignments and ±6-month cutoff shifts all agree (`results/robustness_report.md`).
+- **Models know about many bankruptcies, almost no restatements.** Asked directly (`probes/knowledge.py`), models report 13% to 49% of bankruptcies before their cutoff and 0% to 5% after it (16% for Llama 4 Maverick; Claude Haiku 5.5 has a single post-cutoff bankruptcy); knowability raises reported bankruptcies by 15 points (p < 0.001). Restatements: 0% to 9%, no more than for controls.
 - **Where they know, prediction appears to shift; coding does not move.** When a model reports knowing of a bankruptcy, its predicted probability is 3.0 points higher (0.13 SD, p = 0.08 raw; 3.7 points, p = 0.05 generalised), suggestive rather than conclusive; the gap is not detected after paraphrasing. Coded financial distress does not move (0.01 SD); the difference between the tasks is 0.12 SD (p = 0.09).
-- **Corrected reading.** An earlier version reported leakage rising with firm size. The placebo reproduces that interaction exactly, and it disappears once each model has its own size slope (`results/robustness_model_size.csv`), so it reflected how models treat large firms, not leakage. Use `--model-controls` for covariates of this kind.
+- **Corrected reading.** An earlier version reported leakage rising with firm size. The placebo reproduces that interaction closely, and it disappears once each model has its own size slope (`results/robustness_model_size.csv`), so it reflected how models treat large firms, not leakage. Use `--model-controls` for covariates of this kind.
 
 See `results/report.md`, `results/knowledge_report.md`, `results/robustness_report.md` and `results/figures/`.
 
@@ -132,7 +132,7 @@ print(verdict(r))   # includes the minimum detectable effect
 
 ## Simulation
 
-`simulate/` builds a synthetic corpus with known ground truth and a fake model that leaks when it recognises a firm whose outcome precedes its cutoff. The real masking, model-running, probe and analysis code runs unchanged; only the model is fake. With planted leakage the estimator recovers it and it falls to zero at the paraphrase rung; with no planted leakage every estimate is null. `python -m simulate.run_simulation --firms 1500 --seeds 21 31 41 51 --no-null` repeats the check on further synthetic worlds; across five worlds the average error is 3% to 7% of the planted effect.
+`simulate/` builds a synthetic corpus with known ground truth and a fake model that leaks when it recognises a firm whose outcome precedes its cutoff. The real masking, model-running, probe and analysis code runs unchanged; only the model is fake. With planted leakage the estimator recovers it and it falls to zero at the paraphrase rung; with no planted leakage every estimate is null. `python -m simulate.run_simulation --firms 1500 --seeds 21 31 41 51 --no-null` repeats the check on further synthetic worlds; across five worlds the average error is 3% to 7% of the planted effect (`python simulate/summarise_seeds.py simulate/runs/leak_s21 .` compares one world's estimates with its realised planted effect).
 
 ## Layout
 
@@ -150,7 +150,7 @@ tests/             unit tests
 
 ## Citation
 
-Fritsch, L. (2026). *Spoiler alert: When language models know how the story ends.* Proposal to the *Organization Science* special issue "AI-Enabled Frontiers in Organizational Science". Code: https://github.com/drlaurafritsch/llm-leakage
+Citation details will be added after review.
 
 ## Known limitations
 

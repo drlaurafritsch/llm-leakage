@@ -81,7 +81,7 @@ def estimates_for(df: pd.DataFrame, task: str, pooled_label: str | None) -> tupl
         try:
             r = estimate(g, unit="unit", model="model", score="score", outcome="outcome",
                          event_date="event_date", cutoff="cutoff", cluster="cik", model_controls=["log_assets"],
-                         moderator="log_assets", label=label)
+                         label=label)
         except ValueError as err:
             rows.append({**label, "note": str(err)})
             continue

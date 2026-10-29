@@ -96,8 +96,19 @@ def _design(d: pd.DataFrame, cut: pd.Series, extra: list[str] | None = None):
     return Xw, yw
 
 
-def gamma_only(d: pd.DataFrame, cut: pd.Series) -> float:
-    Xw, yw = _design(d, cut)
+def _size_cols(g: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
+    """Model-specific slopes on standardised log assets (the main specification)."""
+    g = g.copy()
+    z = ((g.log_assets - g.log_assets.mean()) / g.log_assets.std(ddof=0)).fillna(0)
+    cols = []
+    for m in sorted(g.model.unique())[1:]:
+        g[f"sz{m}"] = z * (g.model == m)
+        cols.append(f"sz{m}")
+    return g, cols
+
+
+def gamma_only(d: pd.DataFrame, cut: pd.Series, extra: list[str] | None = None) -> float:
+    Xw, yw = _design(d, cut, extra)
     if "knowable" not in Xw:
         return np.nan
     d = d[d.score.notna()]
@@ -147,10 +158,9 @@ def horizon(data) -> pd.DataFrame:
     """Add model x outcome x years-to-event (and its square) slopes."""
     out = []
     for name, d in data.items():
-        g = d[d.level == "raw"].copy()
+        g, extra = _size_cols(d[d.level == "raw"])
         yrs = (pd.to_datetime(g.event_date) - pd.to_datetime(g.filing_date)).dt.days / 365.25
         yrs = (yrs - yrs[g.outcome == 1].mean()).where(g.outcome == 1, 0.0).fillna(0.0)
-        extra = []
         for m in sorted(g.model.unique())[1:]:
             on = (g.model == m) & (g.outcome == 1)
             g[f"h{m}"] = yrs * on
@@ -233,7 +243,7 @@ def placebo(data, reps: int = 1) -> pd.DataFrame:
         p["event_date"] = p.match_set.map(dates).where(p.outcome == 1)
         if name.startswith("Prediction, pooled"):
             p = p.drop_duplicates(["doc_id", "model", "measure"])
-        out.append(row(est(p, moderator="log_assets"), spec=name))
+        out.append(row(est(p), spec=name))
     return pd.DataFrame(out)
 
 
@@ -241,14 +251,14 @@ def permutation(data) -> pd.DataFrame:
     out = []
     for name in ["Prediction, bankruptcy", "Prediction, pooled",
                  "Coding, distress (bankruptcy)", "Coding, distress (pooled)"]:
-        g = data[name][data[name].level == "raw"].copy()
+        g, extra = _size_cols(data[name][data[name].level == "raw"])
         stated = g.groupby("model").cutoff.first()
         models = list(stated.index)
-        obs = gamma_only(g, g.cutoff)
+        obs = gamma_only(g, g.cutoff, extra)
         draws = []
         for perm in itertools.permutations(stated.values):
             mapping = dict(zip(models, perm))
-            draws.append(gamma_only(g, g.model.map(mapping)))
+            draws.append(gamma_only(g, g.model.map(mapping), extra))
         draws = np.array([x for x in draws if np.isfinite(x)])
         out.append({"spec": name, "gamma_sd": obs, "n_perms": len(draws),
                     "p_two_sided": float(np.mean(np.abs(draws) >= abs(obs) - 1e-12)),
@@ -328,6 +338,193 @@ def signal() -> pd.DataFrame:
              .reset_index())
 
 
+# ----------------------------------------------------- round-two checks (v3)
+
+def _ols(Xw, yw, groups):
+    import statsmodels.api as sm
+    return sm.OLS(yw, Xw).fit(method="pinv", cov_type="cluster",
+                              cov_kwds={"groups": pd.factorize(groups)[0]})
+
+
+def stacked(data) -> pd.DataFrame:
+    """Clean comparisons for staggered cutoffs.
+
+    For each pair of adjacent cutoffs k, k+1, keep the models up to k+1, the controls,
+    and the events dated on or after cutoff k. Events dated between the two cutoffs are
+    knowable only to model k+1; events after cutoff k+1 are knowable to none of these
+    models and serve as not-yet-knowable comparisons. Events already knowable to an
+    earlier model are dropped, so no already-treated observation acts as a control.
+    The stacks are estimated jointly with stack-specific document, model, outcome-slope
+    and size-slope terms. A window is skipped if fewer than 10 later events remain.
+    """
+    out = []
+    for name in ["Prediction, bankruptcy", "Prediction, pooled",
+                 "Coding, distress (bankruptcy)", "Coding, distress (pooled)"]:
+        g = data[name][data[name].level == "raw"]
+        g = g[g.score.notna()].copy()
+        sd = g.score.std(ddof=0)
+        order = g.groupby("model").cutoff.first().pipe(pd.to_datetime).sort_values()
+        ev = pd.to_datetime(g.event_date)
+        parts, windows = [], []
+        for k in range(len(order) - 1):
+            ck, ck1 = order.iloc[k], order.iloc[k + 1]
+            keep = g.model.isin(order.index[: k + 2]) & ((g.outcome == 0) | (ev >= ck))
+            h = g[keep].copy()
+            e = pd.to_datetime(h.event_date)
+            n_win = h[(h.outcome == 1) & (e < ck1)].unit.nunique()
+            n_later = h[(h.outcome == 1) & (e >= ck1)].unit.nunique()
+            windows.append({"spec": name, "treated_model": order.index[k + 1],
+                            "window": f"{ck:%b %Y} to {ck1:%b %Y}",
+                            "events_in_window": n_win, "later_events": n_later})
+            if n_win == 0 or n_later < 10:
+                windows[-1]["used"] = False
+                continue
+            windows[-1]["used"] = True
+            try:
+                r = est(h)
+                windows[-1].update(gamma_sd=r.gamma / sd, se_sd=r.se / sd, p=r.p_value)
+            except ValueError:
+                pass
+            h["unit"] = f"{k}|" + h.unit.astype(str)
+            h["model"] = f"{k}|" + h.model.astype(str)
+            parts.append(h)
+        S = pd.concat(parts)
+        S["stack"] = S.unit.str.split("|").str[0]
+        z = ((S.log_assets - S.log_assets.mean()) / S.log_assets.std(ddof=0)).fillna(0)
+        X = {}
+        for k, gk in S.groupby("stack"):
+            ref = sorted(gk.model.unique())[0]
+            for m in sorted(gk.model.unique()):
+                if m == ref:
+                    continue
+                on = S.model == m
+                X[f"m{m}"] = on.astype(float)
+                X[f"o{m}"] = (on & (S.outcome == 1)).astype(float)
+                X[f"s{m}"] = z * on
+        X["knowable"] = add_knowable(S, "outcome", "event_date", "cutoff")
+        X = pd.DataFrame(X, index=S.index)
+        Xw = X - X.groupby(S.unit).transform("mean")
+        yw = S.score - S.score.groupby(S.unit).transform("mean")
+        Xw = Xw.loc[:, Xw.abs().sum() > 1e-12]
+        fit = _ols(Xw, yw, S.cik)
+        b, se = fit.params["knowable"], fit.bse["knowable"]
+        out.append({"spec": name, "gamma_sd": b / sd, "ci_low_sd": (b - 1.96 * se) / sd,
+                    "ci_high_sd": (b + 1.96 * se) / sd, "p": fit.pvalues["knowable"],
+                    "windows_used": int(sum(w.get("used", False) for w in windows)),
+                    "identifying_events": int(sum(w["events_in_window"] for w in windows
+                                                  if w.get("used")))})
+        STACK_WINDOWS.extend(windows)
+    return pd.DataFrame(out)
+
+
+STACK_WINDOWS: list[dict] = []
+
+
+def donut(data, days: int = 182) -> pd.DataFrame:
+    """Drop event-model pairs whose event falls within `days` of that model's cutoff."""
+    out = []
+    for name, d in data.items():
+        g = d[d.level == "raw"].copy()
+        gap = (pd.to_datetime(g.event_date) - pd.to_datetime(g.cutoff)).dt.days.abs()
+        g = g[~((g.outcome == 1) & (gap < days))]
+        out.append(row(est(g), spec=name, donut_days=days))
+    return pd.DataFrame(out)
+
+
+def _knowledge_frames(level: str | None = None) -> dict[str, pd.DataFrame]:
+    sample = pd.read_csv(INTERIM_DIR / "sample.csv", dtype={"doc_id": str})
+    kn = pd.read_csv(RESULTS_DIR / "knowledge_scored.csv", dtype={"doc_id": str})
+    kb = kn[kn.measure == "bankruptcy"][["doc_id", "model", "says_yes"]]
+    pred = pd.read_csv(RESULTS_DIR / "long_predict.csv", dtype={"doc_id": str})
+    cons = pd.read_csv(RESULTS_DIR / "long_construct.csv", dtype={"doc_id": str})
+    bp = pred[pred.measure == "bankruptcy"].merge(kb, on=["doc_id", "model"], how="left")
+    bc = (cons[cons.measure == "financial_distress"]
+          .merge(kb, on=["doc_id", "model"], how="left")
+          .merge(sample[["doc_id", "bankruptcy_date"]], on="doc_id"))
+    bc = bc[bc.bankruptcy_date.notna() | (bc.outcome == 0)].copy()
+    bc["outcome"] = bc.bankruptcy_date.notna().astype(int)
+    bc["event_date"] = bc.bankruptcy_date
+    out = {}
+    for name, d in [("prediction", bp), ("coding", bc)]:
+        d = d[d.score.notna()].fillna({"says_yes": 0}).copy()
+        if level:
+            d = d[d.level == level]
+        out[name] = d
+    return out
+
+
+def knows_checks(reps: int = 300) -> pd.DataFrame:
+    """Falsification and heterogeneity checks for the knowledge-conditional estimate."""
+    rows = []
+    reid = pd.read_csv(RESULTS_DIR / "reidentify_scored.csv", dtype={"doc_id": str})
+    for task, d in _knowledge_frames().items():
+        unit = 100 if task == "prediction" else 1
+        sd = d[d.level == "raw"].score.std(ddof=0)
+        g = d[d.level == "raw"].copy()
+        know = add_knowable(g, "outcome", "event_date", "cutoff")
+        g["yes_knowable"] = g.says_yes * g.outcome * know
+        g["yes_unknowable_event"] = g.says_yes * g.outcome * (1 - know)
+        g["yes_control"] = g.says_yes * (1 - g.outcome)
+        g, sz = _size_cols(g)
+        Xw, yw = _design(g, g.cutoff, sz + ["yes_knowable", "yes_unknowable_event", "yes_control"])
+        fit = _ols(Xw, yw, g.cik)
+        for c in ["yes_knowable", "yes_unknowable_event", "yes_control"]:
+            rows.append({"task": task, "check": f"falsification: {c}",
+                         "coef": fit.params[c] * unit, "se": fit.bse[c] * unit,
+                         "p": fit.pvalues[c], "coef_sd": fit.params[c] / sd,
+                         "n_yes": int(g[c].sum())})
+        # Without Llama 4 Maverick, whose probe says yes to 9% of controls.
+        h = d[(d.level == "raw") & (d.model != "llama4")].copy()
+        h["knows"] = h.says_yes * h.outcome
+        r = est(h, moderator="knows", standardise_moderator=False)
+        rows.append({"task": task, "check": "without Llama 4 Maverick",
+                     "coef": r.moderator_interaction * unit, "se": r.moderator_se * unit,
+                     "p": r.moderator_p, "coef_sd": r.moderator_interaction / r.score_sd})
+        # Does knowledge-linked leakage concentrate where the model also re-identifies?
+        h = d[d.level == "raw"].merge(reid[reid.level == "raw"][["doc_id", "model", "hit"]],
+                                      on=["doc_id", "model"], how="left").fillna({"hit": 0})
+        know = add_knowable(h, "outcome", "event_date", "cutoff")
+        h["kk"] = h.says_yes * h.outcome * know
+        h["kk_hit"] = h.kk * h.hit
+        h["know_hit"] = know * h.hit
+        h, sz = _size_cols(h)
+        Xw, yw = _design(h, h.cutoff, sz + ["kk", "know_hit", "kk_hit"])
+        fit = _ols(Xw, yw, h.cik)
+        for c in ["kk", "kk_hit", "know_hit"]:
+            rows.append({"task": task, "check": f"re-identification split: {c}",
+                         "coef": fit.params[c] * unit, "se": fit.bse[c] * unit,
+                         "p": fit.pvalues[c], "coef_sd": fit.params[c] / sd})
+        # Raw against paraphrased: firm bootstrap of the difference in the knowledge effect.
+        def lam(frame):
+            f = frame.copy()
+            f["knows"] = f.says_yes * f.outcome
+            r = est(f, moderator="knows", standardise_moderator=False)
+            return r.moderator_interaction * unit
+        raw, par = d[d.level == "raw"], d[d.level == "paraphrased"]
+        point = lam(raw) - lam(par)
+        gr = dict(tuple(raw.groupby("cik"))); gp = dict(tuple(par.groupby("cik")))
+        firms = raw.cik.unique()
+        diffs = []
+        for _ in range(reps):
+            counts = pd.Series(RNG.choice(firms, len(firms), replace=True)).value_counts()
+            fr, fp = [], []
+            for cik, c in counts.items():
+                for j in range(c):
+                    for src, dst in ((gr, fr), (gp, fp)):
+                        part = src.get(cik)
+                        if part is not None:
+                            dst.append(part.assign(unit=part.unit.astype(str) + f"#{j}",
+                                                   cik=f"{cik}#{j}"))
+            diffs.append(lam(pd.concat(fr)) - lam(pd.concat(fp)))
+        diffs = np.array(diffs)
+        rows.append({"task": task, "check": "raw minus paraphrased (bootstrap)",
+                     "coef": point, "se": diffs.std(),
+                     "p": float(2 * min((diffs <= 0).mean(), (diffs >= 0).mean())),
+                     "ci_low": float(np.quantile(diffs, 0.025)),
+                     "ci_high": float(np.quantile(diffs, 0.975))})
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     data = load()
     parts = {
@@ -337,12 +534,17 @@ def main() -> None:
         "horizon": horizon(data),
         "placebo": placebo(data),
         "model_size": model_size(data),
+        "stacked": stacked(data),
+        "stacked_windows": None,
+        "donut": pd.concat([donut(data, 182), donut(data, 365)]),
+        "knows_checks": knows_checks(),
         "permutation": permutation(data),
         "first_stage": first_stage(),
         "knows_diff": knows_diff(),
         "signal": signal(),
     }
     lines = ["# Robustness and power checks", ""]
+    parts["stacked_windows"] = pd.DataFrame(STACK_WINDOWS)
     for k, df in parts.items():
         df.to_csv(RESULTS_DIR / f"robustness_{k}.csv", index=False)
         lines += [f"## {k}", "", df.round(4).to_markdown(index=False), ""]

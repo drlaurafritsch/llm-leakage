@@ -62,19 +62,19 @@
 
 | spec                          |   gamma_sd |   ci_low_sd |   ci_high_sd |      p |
 |:------------------------------|-----------:|------------:|-------------:|-------:|
-| Prediction, bankruptcy        |     0.0265 |     -0.1418 |       0.1948 | 0.7578 |
-| Prediction, pooled            |    -0.0078 |     -0.0901 |       0.0745 | 0.8527 |
-| Coding, distress (bankruptcy) |    -0.0596 |     -0.1467 |       0.0276 | 0.1803 |
-| Coding, distress (pooled)     |     0.0331 |     -0.0191 |       0.0854 | 0.214  |
+| Prediction, bankruptcy        |     0.0632 |     -0.0913 |       0.2176 | 0.4228 |
+| Prediction, pooled            |    -0.0018 |     -0.084  |       0.0804 | 0.9659 |
+| Coding, distress (bankruptcy) |    -0.059  |     -0.1483 |       0.0302 | 0.1947 |
+| Coding, distress (pooled)     |     0.0294 |     -0.0222 |       0.081  | 0.2643 |
 
 ## placebo
 
-| spec                          |   gamma_sd |   ci_low_sd |   ci_high_sd |   se_sd |   mde_sd |      p |   n_identifying |   size_sd |   size_se_sd |   size_p |
-|:------------------------------|-----------:|------------:|-------------:|--------:|---------:|-------:|----------------:|----------:|-------------:|---------:|
-| Prediction, bankruptcy        |    -0.0062 |     -0.1262 |       0.1137 |  0.0612 |   0.1714 | 0.9188 |             105 |    0.0597 |       0.0571 |   0.2961 |
-| Prediction, pooled            |    -0.0051 |     -0.0461 |       0.0359 |  0.0209 |   0.0586 | 0.8068 |             692 |   -0.0035 |       0.0194 |   0.8575 |
-| Coding, distress (bankruptcy) |    -0.0953 |     -0.1922 |       0.0016 |  0.0494 |   0.1384 | 0.0538 |             105 |   -0.0657 |       0.0497 |   0.1861 |
-| Coding, distress (pooled)     |    -0.0251 |     -0.0772 |       0.0269 |  0.0266 |   0.0744 | 0.3444 |             343 |   -0.016  |       0.0188 |   0.3954 |
+| spec                          |   gamma_sd |   ci_low_sd |   ci_high_sd |   se_sd |   mde_sd |      p |   n_identifying |
+|:------------------------------|-----------:|------------:|-------------:|--------:|---------:|-------:|----------------:|
+| Prediction, bankruptcy        |    -0.0103 |     -0.1351 |       0.1145 |  0.0637 |   0.1783 | 0.8714 |             105 |
+| Prediction, pooled            |    -0.0051 |     -0.0462 |       0.0361 |  0.021  |   0.0588 | 0.8099 |             692 |
+| Coding, distress (bankruptcy) |    -0.091  |     -0.1885 |       0.0065 |  0.0497 |   0.1393 | 0.0674 |             105 |
+| Coding, distress (pooled)     |    -0.0248 |     -0.0768 |       0.0272 |  0.0265 |   0.0743 | 0.3504 |             343 |
 
 ## model_size
 
@@ -97,14 +97,82 @@
 | Coding, distress (pooled)     | placebo  | no           |    -0.0221 |     -0.0752 |       0.0309 | 0.4135 |   -0.1098 |       0.0174 |   0      |
 | Coding, distress (pooled)     | placebo  | model x size |    -0.0251 |     -0.0772 |       0.0269 | 0.3444 |   -0.016  |       0.0188 |   0.3954 |
 
+## stacked
+
+| spec                          |   gamma_sd |   ci_low_sd |   ci_high_sd |      p |   windows_used |   identifying_events |
+|:------------------------------|-----------:|------------:|-------------:|-------:|---------------:|---------------------:|
+| Prediction, bankruptcy        |    -0.0115 |     -0.2081 |       0.1851 | 0.9089 |              4 |                   77 |
+| Prediction, pooled            |    -0.0525 |     -0.1458 |       0.0408 | 0.2701 |              4 |                  277 |
+| Coding, distress (bankruptcy) |    -0.0243 |     -0.1347 |       0.086  | 0.6654 |              4 |                   77 |
+| Coding, distress (pooled)     |     0.0007 |     -0.059  |       0.0605 | 0.9806 |              4 |                  273 |
+
+## stacked_windows
+
+| spec                          | treated_model   | window               |   events_in_window |   later_events | used   |   gamma_sd |    se_sd |        p |
+|:------------------------------|:----------------|:---------------------|-------------------:|---------------:|:-------|-----------:|---------:|---------:|
+| Prediction, bankruptcy        | llama33         | Nov 2023 to Jan 2024 |                 12 |             94 | True   |    -0.5855 |   0.182  |   0.0013 |
+| Prediction, bankruptcy        | gpt41mini       | Jan 2024 to Jun 2024 |                 38 |             56 | True   |     0.2172 |   0.1247 |   0.0816 |
+| Prediction, bankruptcy        | llama4          | Jun 2024 to Sep 2024 |                 11 |             45 | True   |    -0.1055 |   0.2792 |   0.7055 |
+| Prediction, bankruptcy        | gemini25flash   | Sep 2024 to Feb 2025 |                 16 |             29 | True   |     0.0173 |   0.1239 |   0.8893 |
+| Prediction, bankruptcy        | haiku55         | Feb 2025 to Jul 2026 |                 28 |              1 | False  |   nan      | nan      | nan      |
+| Prediction, pooled            | llama33         | Nov 2023 to Jan 2024 |                 47 |            306 | True   |    -0.2466 |   0.1095 |   0.0243 |
+| Prediction, pooled            | gpt41mini       | Jan 2024 to Jun 2024 |                134 |            172 | True   |     0.0526 |   0.0597 |   0.3784 |
+| Prediction, pooled            | llama4          | Jun 2024 to Sep 2024 |                 38 |            134 | True   |    -0.198  |   0.1343 |   0.1404 |
+| Prediction, pooled            | gemini25flash   | Sep 2024 to Feb 2025 |                 58 |             76 | True   |     0.0201 |   0.0668 |   0.7632 |
+| Prediction, pooled            | haiku55         | Feb 2025 to Jul 2026 |                 75 |              1 | False  |   nan      | nan      | nan      |
+| Coding, distress (bankruptcy) | llama33         | Nov 2023 to Jan 2024 |                 12 |             94 | True   |    -0.119  |   0.0882 |   0.177  |
+| Coding, distress (bankruptcy) | gpt41mini       | Jan 2024 to Jun 2024 |                 38 |             56 | True   |     0.0122 |   0.0718 |   0.8646 |
+| Coding, distress (bankruptcy) | llama4          | Jun 2024 to Sep 2024 |                 11 |             45 | True   |    -0.2068 |   0.1593 |   0.1942 |
+| Coding, distress (bankruptcy) | gemini25flash   | Sep 2024 to Feb 2025 |                 16 |             29 | True   |     0.1164 |   0.1307 |   0.3732 |
+| Coding, distress (bankruptcy) | haiku55         | Feb 2025 to Jul 2026 |                 28 |              1 | False  |   nan      | nan      | nan      |
+| Coding, distress (pooled)     | llama33         | Nov 2023 to Jan 2024 |                 47 |            297 | True   |    -0.0076 |   0.0857 |   0.9296 |
+| Coding, distress (pooled)     | gpt41mini       | Jan 2024 to Jun 2024 |                131 |            166 | True   |     0.0181 |   0.0416 |   0.6634 |
+| Coding, distress (pooled)     | llama4          | Jun 2024 to Sep 2024 |                 38 |            128 | True   |    -0.0496 |   0.0723 |   0.4924 |
+| Coding, distress (pooled)     | gemini25flash   | Sep 2024 to Feb 2025 |                 57 |             71 | True   |     0.0177 |   0.0803 |   0.8259 |
+| Coding, distress (pooled)     | haiku55         | Feb 2025 to Jul 2026 |                 70 |              1 | False  |   nan      | nan      | nan      |
+
+## donut
+
+| spec                          |   donut_days |   gamma_sd |   ci_low_sd |   ci_high_sd |   se_sd |   mde_sd |      p |   n_identifying |
+|:------------------------------|-------------:|-----------:|------------:|-------------:|--------:|---------:|-------:|----------------:|
+| Prediction, bankruptcy        |          182 |     0.1733 |     -0.088  |       0.4346 |  0.1333 |   0.3733 | 0.1936 |              56 |
+| Prediction, pooled            |          182 |     0.0508 |     -0.0763 |       0.1778 |  0.0648 |   0.1815 | 0.4336 |             186 |
+| Coding, distress (bankruptcy) |          182 |    -0.1066 |     -0.3012 |       0.088  |  0.0993 |   0.2781 | 0.2831 |              56 |
+| Coding, distress (pooled)     |          182 |    -0.0027 |     -0.1078 |       0.1025 |  0.0536 |   0.1502 | 0.9606 |             180 |
+| Prediction, bankruptcy        |          365 |     0.1568 |     -0.2553 |       0.569  |  0.2103 |   0.5888 | 0.4557 |              21 |
+| Prediction, pooled            |          365 |     0.0925 |     -0.0844 |       0.2693 |  0.0902 |   0.2526 | 0.3054 |              76 |
+| Coding, distress (bankruptcy) |          365 |     0.0612 |     -0.2458 |       0.3683 |  0.1567 |   0.4387 | 0.6958 |              21 |
+| Coding, distress (pooled)     |          365 |     0.0032 |     -0.1587 |       0.1651 |  0.0826 |   0.2313 | 0.9694 |              72 |
+
+## knows_checks
+
+| task       | check                               |    coef |     se |      p |   coef_sd |   n_yes |   ci_low |   ci_high |
+|:-----------|:------------------------------------|--------:|-------:|-------:|----------:|--------:|---------:|----------:|
+| prediction | falsification: yes_knowable         |  2.8935 | 1.7021 | 0.0891 |    0.1269 |     198 | nan      |  nan      |
+| prediction | falsification: yes_unknowable_event | -5.3035 | 7.0337 | 0.4508 |   -0.2325 |      15 | nan      |  nan      |
+| prediction | falsification: yes_control          |  2.2263 | 1.1019 | 0.0433 |    0.0976 |     193 | nan      |  nan      |
+| prediction | without Llama 4 Maverick            |  3.7105 | 2.0714 | 0.0732 |    0.1722 |     nan | nan      |  nan      |
+| prediction | re-identification split: kk         |  0.8219 | 3.817  | 0.8295 |    0.036  |     nan | nan      |  nan      |
+| prediction | re-identification split: kk_hit     |  2.3798 | 4.0282 | 0.5547 |    0.1043 |     nan | nan      |  nan      |
+| prediction | re-identification split: know_hit   |  0.183  | 2.0435 | 0.9286 |    0.008  |     nan | nan      |  nan      |
+| prediction | raw minus paraphrased (bootstrap)   |  3.4768 | 1.6151 | 0.0533 |  nan      |     nan |   0.0045 |    6.5359 |
+| coding     | falsification: yes_knowable         |  0.0217 | 0.0805 | 0.7872 |    0.0122 |     198 | nan      |  nan      |
+| coding     | falsification: yes_unknowable_event |  0.2413 | 0.1552 | 0.1199 |    0.1351 |      15 | nan      |  nan      |
+| coding     | falsification: yes_control          | -0.0011 | 0.056  | 0.985  |   -0.0006 |     144 | nan      |  nan      |
+| coding     | without Llama 4 Maverick            |  0.0128 | 0.0869 | 0.8832 |    0.007  |     nan | nan      |  nan      |
+| coding     | re-identification split: kk         | -0.5705 | 0.2459 | 0.0203 |   -0.3194 |     nan | nan      |  nan      |
+| coding     | re-identification split: kk_hit     |  0.6339 | 0.247  | 0.0103 |    0.3549 |     nan | nan      |  nan      |
+| coding     | re-identification split: know_hit   | -0.1013 | 0.1498 | 0.4988 |   -0.0567 |     nan | nan      |  nan      |
+| coding     | raw minus paraphrased (bootstrap)   |  0.0221 | 0.0876 | 0.9467 |  nan      |     nan |  -0.1616 |    0.1574 |
+
 ## permutation
 
 | spec                          |   gamma_sd |   n_perms |   p_two_sided |   perm_q025 |   perm_q975 |
 |:------------------------------|-----------:|----------:|--------------:|------------:|------------:|
-| Prediction, bankruptcy        |    -0.0076 |       720 |        0.9278 |     -0.1562 |      0.1649 |
-| Prediction, pooled            |    -0.0262 |       720 |        0.4444 |     -0.0584 |      0.0635 |
-| Coding, distress (bankruptcy) |    -0.0811 |       720 |        0.1028 |     -0.0895 |      0.1077 |
-| Coding, distress (pooled)     |     0.0039 |       720 |        0.875  |     -0.0484 |      0.0554 |
+| Prediction, bankruptcy        |     0.0365 |       720 |        0.7083 |     -0.1602 |      0.1696 |
+| Prediction, pooled            |    -0.0197 |       720 |        0.5736 |     -0.0567 |      0.0565 |
+| Coding, distress (bankruptcy) |    -0.0867 |       720 |        0.1194 |     -0.1044 |      0.114  |
+| Coding, distress (pooled)     |    -0.0026 |       720 |        0.9264 |     -0.0449 |      0.0538 |
 
 ## first_stage
 
@@ -127,7 +195,7 @@
 
 |   lambda_prediction_sd |   se_prediction |   lambda_coding_sd |   se_coding |   difference_sd |   se_difference |   ci_low |   ci_high |   p_difference |   boot_reps |
 |-----------------------:|----------------:|-------------------:|------------:|----------------:|----------------:|---------:|----------:|---------------:|------------:|
-|                 0.1329 |          0.0773 |             0.0086 |      0.0474 |          0.1243 |          0.0738 |  -0.0204 |     0.269 |         0.0867 |         300 |
+|                 0.1329 |          0.0827 |             0.0086 |       0.044 |          0.1243 |          0.0773 |  -0.0272 |    0.2758 |         0.0867 |         300 |
 
 ## signal
 
