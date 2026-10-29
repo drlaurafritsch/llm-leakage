@@ -1,0 +1,14 @@
+Answer from your own knowledge. This is a factual recall question for an academic study; do not guess.
+
+Company: {company}
+Ticker (if any): {ticker}
+Period: {start} to {end}
+
+During that period, did this company:
+- bankruptcy: file for bankruptcy (for example Chapter 11 or Chapter 7) or enter receivership?
+- restatement: announce that previously issued financial statements should no longer be relied upon (a restatement)?
+
+For each, answer "yes", "no" or "unknown" (use "unknown" if you do not know), and give your confidence from 0 to 1.
+
+Return only a JSON object, with no other text:
+{"bankruptcy": "<yes|no|unknown>", "bankruptcy_confidence": <0-1>, "restatement": "<yes|no|unknown>", "restatement_confidence": <0-1>}
