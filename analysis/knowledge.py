@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from common import RESULTS_DIR
+from common import INTERIM_DIR, RESULTS_DIR
 from diagnostic.leakcheck import estimate
 from diagnostic.leakcheck.core import add_knowable
 
@@ -72,6 +72,28 @@ def main() -> None:
                              label={"task": task, "level": level})
             except ValueError:
                 continue
+            row = r.as_row()
+            row["share_knowable_known"] = float(
+                g.loc[add_knowable(g, "outcome", "event_date", "cutoff") == 1, "knows"].mean())
+            out.append(row)
+    # Bankruptcy alone: the outcome models actually know (restatements are rarely known).
+    kb = kn[kn.measure == "bankruptcy"][["doc_id", "model", "says_yes"]]
+    sample = pd.read_csv(INTERIM_DIR / "sample.csv", dtype={"doc_id": str})
+    bp = pred[pred.measure == "bankruptcy"].merge(kb, on=["doc_id", "model"], how="left")
+    bc = (cons[cons.measure == "financial_distress"]
+          .merge(kb, on=["doc_id", "model"], how="left")
+          .merge(sample[["doc_id", "bankruptcy_date"]], on="doc_id"))
+    bc = bc[bc.bankruptcy_date.notna() | (bc.outcome == 0)].copy()
+    bc["outcome"] = bc.bankruptcy_date.notna().astype(int)
+    bc["event_date"] = bc.bankruptcy_date
+    for task, d in [("predict_bankruptcy", bp), ("construct_bankruptcy_events", bc)]:
+        d = d.fillna({"says_yes": 0})
+        d["knows"] = d["says_yes"] * d["outcome"]
+        for level, g in d.groupby("level"):
+            r = estimate(g, unit="unit", model="model", score="score", outcome="outcome",
+                         event_date="event_date", cutoff="cutoff", cluster="cik",
+                         moderator="knows", standardise_moderator=False,
+                         label={"task": task, "level": level})
             row = r.as_row()
             row["share_knowable_known"] = float(
                 g.loc[add_knowable(g, "outcome", "event_date", "cutoff") == 1, "knows"].mean())

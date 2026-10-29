@@ -88,7 +88,10 @@ Each step resumes where it stopped. Start small with `python -m coding.run_model
 - **Average leakage is small and bounded.** No task, construct or rung shows detectable leakage. On raw text the 95% interval excludes effects larger than 0.06 SD for outcome prediction and 0.05 SD for coded financial distress, and the result holds when every stated cutoff is shifted by up to six months (`results/cutoff_sensitivity.csv`).
 - **It rises with prominence.** In outcome prediction, leakage increases with firm size (+0.014 in predicted probability per SD of log assets, p = 0.001) and the gradient disappears after paraphrasing (p = 0.10). For coded distress the size interaction runs the other way, which needs further work.
 
-See `results/report.md` and `results/figures/`.
+- **Models mostly do not know what happened.** Asked directly (`probes/knowledge.py`), models report a restatement they could know about 0% to 9% of the time and a bankruptcy 13% to 49% of the time, against false alarms of 0% to 9% for control firms.
+- **Where they know, prediction leaks; coding does not.** When a model knows of a bankruptcy, its predicted bankruptcy probability for that filing is 3.7 points higher (p = 0.049), about 0.16 SD; paraphrasing removes it (p = 0.81). Coded financial distress does not move (p = 0.88).
+
+See `results/report.md`, `results/knowledge_report.md` and `results/figures/`.
 
 ## Outputs
 

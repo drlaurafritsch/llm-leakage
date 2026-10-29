@@ -1,0 +1,36 @@
+model,measure,status,n,says_yes,says_unknown
+gemini25flash,bankruptcy,control,1331,0.01728024042073629,0.04658151765589782
+gemini25flash,bankruptcy,"event, after cutoff",29,0.0,0.034482758620689655
+gemini25flash,bankruptcy,"event, knowable",113,0.4336283185840708,0.07079646017699115
+gemini25flash,restatement,control,1110,0.027927927927927927,0.05045045045045045
+gemini25flash,restatement,"event, after cutoff",47,0.02127659574468085,0.10638297872340426
+gemini25flash,restatement,"event, knowable",316,0.08860759493670886,0.0379746835443038
+gpt41mini,bankruptcy,control,1331,0.0007513148009015778,0.0608564988730278
+gpt41mini,bankruptcy,"event, after cutoff",56,0.0,0.10714285714285714
+gpt41mini,bankruptcy,"event, knowable",86,0.12790697674418605,0.046511627906976744
+gpt41mini,restatement,control,1110,0.0018018018018018018,0.05315315315315315
+gpt41mini,restatement,"event, after cutoff",116,0.0,0.10344827586206896
+gpt41mini,restatement,"event, knowable",247,0.0,0.08097165991902834
+gpt4omini,bankruptcy,control,1331,0.003005259203606311,0.40796393688955673
+gpt4omini,bankruptcy,"event, after cutoff",106,0.018867924528301886,0.5283018867924528
+gpt4omini,bankruptcy,"event, knowable",36,0.25,0.4722222222222222
+gpt4omini,restatement,control,1110,0.0,0.5171171171171172
+gpt4omini,restatement,"event, after cutoff",247,0.0,0.6761133603238867
+gpt4omini,restatement,"event, knowable",116,0.017241379310344827,0.5
+haiku55,bankruptcy,control,1331,0.015777610818933134,0.386175807663411
+haiku55,bankruptcy,"event, after cutoff",1,1.0,0.0
+haiku55,bankruptcy,"event, knowable",141,0.46099290780141844,0.4326241134751773
+haiku55,restatement,control,1110,0.00990990990990991,0.5693693693693693
+haiku55,restatement,"event, knowable",363,0.04132231404958678,0.6694214876033058
+llama33,bankruptcy,control,1331,0.021788129226145755,0.5777610818933133
+llama33,bankruptcy,"event, after cutoff",94,0.05319148936170213,0.7340425531914894
+llama33,bankruptcy,"event, knowable",48,0.3333333333333333,0.4791666666666667
+llama33,restatement,control,1110,0.0,0.9018018018018018
+llama33,restatement,"event, after cutoff",212,0.0,0.9764150943396226
+llama33,restatement,"event, knowable",151,0.026490066225165563,0.8609271523178808
+llama4,bankruptcy,control,1331,0.08715251690458302,0.5447032306536439
+llama4,bankruptcy,"event, after cutoff",45,0.15555555555555556,0.7111111111111111
+llama4,bankruptcy,"event, knowable",97,0.4948453608247423,0.4536082474226804
+llama4,restatement,control,1110,0.03063063063063063,0.6657657657657657
+llama4,restatement,"event, after cutoff",89,0.02247191011235955,0.7528089887640449
+llama4,restatement,"event, knowable",274,0.058394160583941604,0.7262773722627737
