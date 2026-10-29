@@ -39,19 +39,24 @@ def stable_hash(*parts: Any) -> str:
 
 
 def read_jsonl(path: Path) -> Iterator[dict]:
-    """Read a JSONL file, falling back to a gzipped copy (path + '.gz')."""
+    """Read a JSONL file and, if present, its gzipped archive (path + '.gz').
+
+    The repository ships cached outputs gzipped; new rows are appended to the
+    plain file, so both are read, archive first.
+    """
+    import gzip
+
     gz = path.with_name(path.name + ".gz")
-    if not path.exists() and not gz.exists():
-        return iter(())
+    sources = [s for s in (gz, path) if s.exists()]
+
     def _gen():
-        import gzip
-        opener = (lambda: open(path, encoding="utf-8")) if path.exists() else (
-            lambda: gzip.open(gz, "rt", encoding="utf-8"))
-        with opener() as fh:
-            for line in fh:
-                line = line.strip()
-                if line:
-                    yield json.loads(line)
+        for src in sources:
+            opener = gzip.open if src.suffix == ".gz" else open
+            with opener(src, "rt", encoding="utf-8") as fh:
+                for line in fh:
+                    line = line.strip()
+                    if line:
+                        yield json.loads(line)
     return _gen()
 
 

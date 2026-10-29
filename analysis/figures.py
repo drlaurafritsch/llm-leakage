@@ -19,6 +19,8 @@ from common import RESULTS_DIR  # noqa: E402
 from masking.mask import LEVELS  # noqa: E402
 
 INK = "#1f2933"
+LABELS = {"gpt4omini": "GPT-4o mini", "llama33": "Llama 3.3 70B", "gpt41mini": "GPT-4.1 mini",
+          "llama4": "Llama 4 Maverick", "gemini25flash": "Gemini 2.5 Flash", "haiku55": "Claude Haiku 5.5"}
 MUTED = "#7b8794"
 SERIES = {"predict / all_outcomes": "#2f6fb0", "construct / financial_distress": "#c2541c"}
 
@@ -34,7 +36,7 @@ def _style(ax):
 
 
 def leakage_by_level(est: pd.DataFrame, out) -> None:
-    fig, ax = plt.subplots(figsize=(6.4, 3.8), dpi=200)
+    fig, ax = plt.subplots(figsize=(6.4, 4.2), dpi=200)
     order = [lvl for lvl in LEVELS if lvl in set(est["level"])]
     x = range(len(order))
     for i, (name, colour) in enumerate(SERIES.items()):
@@ -51,18 +53,18 @@ def leakage_by_level(est: pd.DataFrame, out) -> None:
     ax.set_xticks(list(x), [lvl.capitalize() for lvl in order])
     ax.set_ylabel("Leakage (SD of score)", color=INK, fontsize=9)
     ax.set_xlabel("Masking level", color=INK, fontsize=9)
-    ax.set_title("Leakage across the masking ladder (95% CI)", color=INK, fontsize=10, loc="left")
+    ax.set_title("Average leakage is indistinguishable from zero at every rung (95% CI)", color=INK, fontsize=10, loc="left")
     _style(ax)
-    ax.legend(frameon=False, fontsize=8)
+    ax.legend(frameon=False, fontsize=8, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2)
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
 
 
 def reid_by_level(rates: pd.DataFrame, out) -> None:
-    fig, ax = plt.subplots(figsize=(6.4, 3.4), dpi=200)
+    fig, ax = plt.subplots(figsize=(7.4, 3.4), dpi=200)
     order = [lvl for lvl in LEVELS if lvl in set(rates["level"])]
-    palette = ["#2f6fb0", "#c2541c", "#3d8b5a", "#7a4fa3"]
+    palette = ["#2f6fb0", "#c2541c", "#3d8b5a", "#7a4fa3", "#b8860b", "#5f6b7a"]
     try:
         from coding.llm import load_models
         model_order = list(load_models()[0])
@@ -72,14 +74,14 @@ def reid_by_level(rates: pd.DataFrame, out) -> None:
     for i, model in enumerate(model_order):
         g = rates[rates["model"] == model].set_index("level").reindex(order)
         ax.plot(range(len(order)), g["hit"], "o-", color=palette[i % len(palette)],
-                linewidth=1.6, markersize=5, label=model)
+                linewidth=1.6, markersize=5, label=LABELS.get(model, model))
     ax.set_xticks(range(len(order)), [lvl.capitalize() for lvl in order])
     ax.set_ylim(0, 1)
     ax.set_ylabel("Share of firms re-identified", color=INK, fontsize=9)
     ax.set_xlabel("Masking level", color=INK, fontsize=9)
-    ax.set_title("Re-identification by model", color=INK, fontsize=10, loc="left")
+    ax.set_title("Removing names leaves half to three-quarters of firms identifiable", color=INK, fontsize=10, loc="left")
     _style(ax)
-    ax.legend(frameon=False, fontsize=8, title="Model", title_fontsize=8)
+    ax.legend(frameon=False, fontsize=8, loc="upper left", bbox_to_anchor=(1.01, 1))
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)

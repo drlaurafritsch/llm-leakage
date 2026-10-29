@@ -80,6 +80,16 @@ make analysis    # estimates, report and figures
 
 Each step resumes where it stopped. Start small with `python -m coding.run_models --limit 50` to check costs before a full run.
 
+## Results (full run, 28 October 2026)
+
+1,473 filings × 6 models × 4 masking rungs: 70,704 coding and prediction calls and 35,352 re-identification calls, all cached in `results/*.jsonl.gz`.
+
+- **Masking names does not hide identity.** With names, tickers and URLs removed, models still name 45% (GPT-4o mini) to 73% (Claude Haiku 5.5) of firms; generalising dates and amounts barely helps (42% to 74%). Paraphrasing brings identification down to 2% to 13%.
+- **Average leakage is small and bounded.** No task, construct or rung shows detectable leakage. On raw text the 95% interval excludes effects larger than 0.06 SD for outcome prediction and 0.05 SD for coded financial distress, and the result holds when every stated cutoff is shifted by up to six months (`results/cutoff_sensitivity.csv`).
+- **It rises with prominence.** In outcome prediction, leakage increases with firm size (+0.014 in predicted probability per SD of log assets, p = 0.001) and the gradient disappears after paraphrasing (p = 0.10). For coded distress the size interaction runs the other way, which needs further work.
+
+See `results/report.md` and `results/figures/`.
+
 ## Outputs
 
 | File | Contents |

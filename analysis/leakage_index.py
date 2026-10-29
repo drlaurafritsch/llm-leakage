@@ -88,6 +88,9 @@ def estimates_for(df: pd.DataFrame, task: str, pooled_label: str | None) -> tupl
         row = r.as_row()
         row["verdict"] = verdict(r)
         rows.append(row)
+        if measure == pooled_label:
+            # AUC across outcome types with different base rates is not meaningful.
+            continue
         a = auc_table(g, model="model", score="score", outcome="outcome",
                       event_date="event_date", cutoff="cutoff")
         a = a.assign(**label)
