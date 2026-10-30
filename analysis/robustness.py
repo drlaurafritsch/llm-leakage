@@ -559,6 +559,64 @@ def knows_checks(reps: int = 300) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def belief_checks() -> pd.DataFrame:
+    """Pooled belief effect and a graded belief scale (raw text unless stated).
+
+    Pooled: a single indicator for the model answering "yes" (bankruptcy) for the
+    filing, whatever the outcome, alongside knowability, motivated by the
+    falsification in knows_checks (a "yes" moves scores by the same amount whether
+    or not the firm failed). Graded: categories of the probe answer and its
+    confidence, relative to a confident "no" (confidence >= 0.9).
+    """
+    sample = pd.read_csv(INTERIM_DIR / "sample.csv", dtype={"doc_id": str})
+    kn = pd.read_csv(RESULTS_DIR / "knowledge_scored.csv", dtype={"doc_id": str})
+    kb = kn[kn.measure == "bankruptcy"][["doc_id", "model", "answer", "confidence"]]
+    pred = pd.read_csv(RESULTS_DIR / "long_predict.csv", dtype={"doc_id": str})
+    cons = pd.read_csv(RESULTS_DIR / "long_construct.csv", dtype={"doc_id": str})
+    bp = pred[pred.measure == "bankruptcy"].merge(kb, on=["doc_id", "model"], how="left")
+    bc = (cons[cons.measure == "financial_distress"].merge(kb, on=["doc_id", "model"], how="left")
+          .merge(sample[["doc_id", "bankruptcy_date"]], on="doc_id"))
+    bc = bc[bc.bankruptcy_date.notna() | (bc.outcome == 0)].copy()
+    bc["outcome"] = bc.bankruptcy_date.notna().astype(int)
+    bc["event_date"] = bc.bankruptcy_date
+    rows = []
+    for task, d in [("prediction", bp), ("coding", bc)]:
+        unit = 100 if task == "prediction" else 1
+        for level in LEVELS_ALL:
+            g = d[(d.level == level) & d.score.notna()].copy()
+            sd = g.score.std(ddof=0)
+            g["yes_any"] = (g.answer == 1).astype(float)
+            g, sz = _size_cols(g)
+            Xw, yw = _design(g, g.cutoff, sz + ["yes_any"])
+            f = _ols(Xw, yw, g.cik)
+            rows.append({"task": task, "level": level, "check": "pooled: yes on any filing",
+                         "coef": f.params["yes_any"] * unit, "se": f.bse["yes_any"] * unit,
+                         "p": f.pvalues["yes_any"], "coef_sd": f.params["yes_any"] / sd,
+                         "n": int(g.yes_any.sum())})
+            if level != "raw":
+                continue
+            conf = g.confidence.fillna(0)
+            cats = {
+                "no, less confident (<0.9)": (g.answer == 0) & (conf < 0.9),
+                "unknown or unreadable": g.answer.isna(),
+                "yes, less confident (<0.9)": (g.answer == 1) & (conf < 0.9),
+                "yes, confident (>=0.9)": (g.answer == 1) & (conf >= 0.9),
+            }
+            cols = []
+            for name, mask in cats.items():
+                c = "cat_" + str(len(cols)); g[c] = mask.astype(float); cols.append((c, name))
+            Xw, yw = _design(g, g.cutoff, sz + [c for c, _ in cols])
+            f = _ols(Xw, yw, g.cik)
+            for c, name in cols:
+                rows.append({"task": task, "level": level, "check": f"graded: {name}",
+                             "coef": f.params[c] * unit, "se": f.bse[c] * unit,
+                             "p": f.pvalues[c], "coef_sd": f.params[c] / sd, "n": int(g[c].sum())})
+    return pd.DataFrame(rows)
+
+
+LEVELS_ALL = ["raw", "names", "generalised", "paraphrased"]
+
+
 def main() -> None:
     data = load()
     parts = {
@@ -573,6 +631,7 @@ def main() -> None:
         "donut": pd.concat([donut(data, 182), donut(data, 365)]),
         "knows_checks": knows_checks(),
         "shifts_bankruptcy_filers": shifts_bankruptcy_filers(data),
+        "belief_checks": belief_checks(),
         "permutation": permutation(data),
         "first_stage": first_stage(),
         "knows_diff": knows_diff(),

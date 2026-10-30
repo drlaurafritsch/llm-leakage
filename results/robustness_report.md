@@ -1,5 +1,26 @@
 # Robustness and power checks
 
+## belief_checks
+
+| task       | level       | check                              |    coef |     se |      p |   coef_sd |    n |
+|:-----------|:------------|:-----------------------------------|--------:|-------:|-------:|----------:|-----:|
+| prediction | raw         | pooled: yes on any filing          |  2.1683 | 0.914  | 0.0177 |    0.0951 |  406 |
+| prediction | raw         | graded: no, less confident (<0.9)  |  0.2088 | 0.5581 | 0.7083 |    0.0092 |  928 |
+| prediction | raw         | graded: unknown or unreadable      | -0.7215 | 0.4948 | 0.1448 |   -0.0316 | 3009 |
+| prediction | raw         | graded: yes, less confident (<0.9) |  0.7301 | 1.3111 | 0.5776 |    0.032  |  173 |
+| prediction | raw         | graded: yes, confident (>=0.9)     |  3.0117 | 1.1646 | 0.0097 |    0.132  |  233 |
+| prediction | names       | pooled: yes on any filing          |  1.7394 | 0.9249 | 0.06   |    0.0763 |  407 |
+| prediction | generalised | pooled: yes on any filing          |  2.355  | 1.0276 | 0.0219 |    0.1053 |  407 |
+| prediction | paraphrased | pooled: yes on any filing          |  1.0435 | 0.8536 | 0.2216 |    0.0511 |  407 |
+| coding     | raw         | pooled: yes on any filing          |  0.0191 | 0.0457 | 0.6756 |    0.0107 |  357 |
+| coding     | raw         | graded: no, less confident (<0.9)  |  0.1266 | 0.0389 | 0.0011 |    0.0709 |  706 |
+| coding     | raw         | graded: unknown or unreadable      | -0.0144 | 0.0327 | 0.6599 |   -0.0081 | 2193 |
+| coding     | raw         | graded: yes, less confident (<0.9) | -0.033  | 0.0654 | 0.6136 |   -0.0185 |  142 |
+| coding     | raw         | graded: yes, confident (>=0.9)     |  0.0968 | 0.0562 | 0.0853 |    0.0542 |  215 |
+| coding     | names       | pooled: yes on any filing          | -0.0022 | 0.0439 | 0.9602 |   -0.0012 |  357 |
+| coding     | generalised | pooled: yes on any filing          | -0.0174 | 0.0439 | 0.691  |   -0.01   |  357 |
+| coding     | paraphrased | pooled: yes on any filing          | -0.0372 | 0.052  | 0.4746 |   -0.0208 |  357 |
+
 ## donut
 
 | spec                          |   donut_days |   gamma_sd |   ci_low_sd |   ci_high_sd |   se_sd |   mde_sd |      p |   n_identifying |
