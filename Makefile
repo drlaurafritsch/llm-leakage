@@ -30,5 +30,6 @@ analysis:
 	$(PY) -m analysis.knowledge
 	$(PY) -m analysis.robustness
 	$(PY) -m analysis.figures
+	$(PY) -m analysis.figure2
 
 all: edgar sample texts models probe analysis
